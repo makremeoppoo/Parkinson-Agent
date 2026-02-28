@@ -14,10 +14,8 @@ const { LlmAgent, Runner, InMemorySessionService } = require('@google/adk');
 const {
   saveAnalysis,
   saveReportMetadata,
-  bulkSyncAnalyses,
   getAnalysesFromCloud,
 } = require('./firestoreService');
-const { getResults }  = require('../utils/dataLogger');
 const { generateReport } = require('../utils/reportGenerator');
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
@@ -55,9 +53,9 @@ const saveReportTool = {
     required: ['filename'],
   },
   execute: async ({ filename }) => {
-    const records = getResults();
+    const records = await getAnalysesFromCloud();
     const docId   = await saveReportMetadata(filename, records.length);
-    const html    = generateReport();
+    const html    = generateReport(records);
     return {
       success:       true,
       documentId:    docId,
@@ -65,24 +63,6 @@ const saveReportTool = {
       totalSessions: records.length,
       html,
     };
-  },
-};
-
-const syncLocalRecordsTool = {
-  name: 'sync_local_records',
-  description: 'Reads all local results.json records and bulk-writes them to Firestore.',
-  parameters: {
-    type: 'object',
-    properties: {},
-    required: [],
-  },
-  execute: async () => {
-    const records = getResults();
-    if (records.length === 0) {
-      return { success: true, synced: 0, message: 'No local records to sync.' };
-    }
-    const synced = await bulkSyncAnalyses(records);
-    return { success: true, synced };
   },
 };
 
@@ -110,10 +90,9 @@ const parkinsontAgent = new LlmAgent({
 Use your tools to:
 - Save individual analysis results to Firestore with save_analysis.
 - Generate and save HTML report metadata with save_report.
-- Bulk-sync all local records with sync_local_records.
 - Retrieve cloud records with get_cloud_analyses.
 Always respond in JSON format with operation results.`,
-  tools: [saveAnalysisTool, saveReportTool, syncLocalRecordsTool, getCloudAnalysesTool],
+  tools: [saveAnalysisTool, saveReportTool, getCloudAnalysesTool],
 });
 
 // ── Runner ────────────────────────────────────────────────────────────────────

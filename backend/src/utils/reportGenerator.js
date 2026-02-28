@@ -1,5 +1,3 @@
-const { getResults } = require('./dataLogger');
-
 const SEVERITY_COLORS = {
   none:     '#22c55e',
   mild:     '#84cc16',
@@ -15,28 +13,28 @@ const ds     = (records, key) => records.map((r) => Number(r[key] ?? 0));
 
 /**
  * Build and return a self-contained HTML medical report.
+ * @param {Array} records - Analysis records from Firestore
  */
-const generateReport = () => {
-  const records = getResults();
-  const reportDate = new Date().toLocaleString('fr-FR', {
+const generateReport = (records) => {
+  const reportDate = new Date().toLocaleString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long',
     day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 
   if (records.length === 0) {
-    return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-<title>Rapport Médical</title></head>
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Medical Report</title></head>
 <body style="font-family:'Segoe UI',sans-serif;padding:2rem;color:#1e293b">
-  <h1 style="color:#0f172a">Rapport Médical – Suivi Parkinson</h1>
-  <p style="color:#64748b">Généré le ${reportDate}</p>
-  <p><em>Aucune session enregistrée pour le moment.</em></p>
+  <h1 style="color:#0f172a">Medical Report – Parkinson Monitoring</h1>
+  <p style="color:#64748b">Generated on ${reportDate}</p>
+  <p><em>No sessions recorded yet.</em></p>
 </body></html>`;
   }
 
   const labels       = records.map((r, i) => {
     const d    = new Date(r.timestamp);
-    const date = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-    const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const date = d.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     return `S${i + 1} (${date} ${time})`;
   });
 
@@ -49,7 +47,7 @@ const generateReport = () => {
   // Severity distribution
   const severityCounts = {};
   records.forEach((r) => {
-    const sev = String(r.overall_severity || 'inconnu').toLowerCase();
+    const sev = String(r.overall_severity || 'unknown').toLowerCase();
     severityCounts[sev] = (severityCounts[sev] || 0) + 1;
   });
   const sevLabels = Object.keys(severityCounts);
@@ -62,8 +60,8 @@ const generateReport = () => {
   // Table rows (last 20, newest first)
   const tableRows = records.slice().reverse().slice(0, 20).map((r, i) => {
     const d      = new Date(r.timestamp);
-    const dateStr = d.toLocaleDateString('fr-FR');
-    const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = d.toLocaleDateString('en-US');
+    const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     const isAlert = r.needs_alert === true || r.needs_alert === 'true';
     const sev     = r.overall_severity || '—';
     const sevColor = SEVERITY_COLORS[sev.toLowerCase()] || '#94a3b8';
@@ -81,8 +79,8 @@ const generateReport = () => {
           background:${sevColor}22;color:${sevColor};border:1px solid ${sevColor}44">${sev}</span></td>
       <td>${conf}</td>
       <td>${isAlert
-        ? '<span style="color:#ef4444;font-weight:700">⚠ Oui</span>'
-        : '<span style="color:#22c55e">Non</span>'}</td>
+        ? '<span style="color:#ef4444;font-weight:700">⚠ Yes</span>'
+        : '<span style="color:#22c55e">No</span>'}</td>
     </tr>`;
   }).join('\n');
 
@@ -90,11 +88,11 @@ const generateReport = () => {
   const j = JSON.stringify;
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rapport Médical – Suivi Parkinson</title>
+  <title>Medical Report – Parkinson Monitoring</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -167,11 +165,11 @@ const generateReport = () => {
   <!-- ── Header ── -->
   <div class="hdr">
     <div>
-      <h1>Rapport Médical – Suivi Parkinson</h1>
-      <div class="sub">Analyse automatisée des symptômes moteurs par IA</div>
+      <h1>Medical Report – Parkinson Monitoring</h1>
+      <div class="sub">Automated AI-powered motor symptom analysis</div>
     </div>
     <div class="meta">
-      <strong>Généré le</strong>
+      <strong>Generated on</strong>
       ${reportDate}
     </div>
   </div>
@@ -179,51 +177,51 @@ const generateReport = () => {
   <!-- ── KPI Cards ── -->
   <div class="cards">
     <div class="card blue">
-      <div class="lbl">Sessions totales</div>
+      <div class="lbl">Total Sessions</div>
       <div class="val">${totalSessions}</div>
-      <div class="sm">analyses enregistrées</div>
+      <div class="sm">recorded analyses</div>
     </div>
     <div class="card red">
-      <div class="lbl">Tremblement moy.</div>
+      <div class="lbl">Avg. Tremor</div>
       <div class="val" style="color:#ef4444">${avg(tremor)}</div>
-      <div class="sm">sur 3 · max ${maxVal(tremor)}</div>
+      <div class="sm">out of 3 · max ${maxVal(tremor)}</div>
     </div>
     <div class="card orange">
-      <div class="lbl">Alertes déclenchées</div>
+      <div class="lbl">Alerts Triggered</div>
       <div class="val" style="color:#f97316">${alertCount}</div>
-      <div class="sm">${totalSessions > 0 ? Math.round(alertCount / totalSessions * 100) : 0}% des sessions</div>
+      <div class="sm">${totalSessions > 0 ? Math.round(alertCount / totalSessions * 100) : 0}% of sessions</div>
     </div>
     <div class="card green">
-      <div class="lbl">Équilibre moy.</div>
+      <div class="lbl">Avg. Balance</div>
       <div class="val" style="color:#22c55e">${avg(balance)}</div>
-      <div class="sm">sur 3 · min ${minVal(balance)}</div>
+      <div class="sm">out of 3 · min ${minVal(balance)}</div>
     </div>
   </div>
 
   <!-- ── Score mini stats ── -->
   <div class="scores">
     <div class="smini">
-      <div class="nm">Tremblement</div>
+      <div class="nm">Tremor</div>
       <div class="av" style="color:#ef4444">${avg(tremor)}</div>
       <div class="rng">min ${minVal(tremor)} — max ${maxVal(tremor)}</div>
     </div>
     <div class="smini">
-      <div class="nm">Rigidité</div>
+      <div class="nm">Rigidity</div>
       <div class="av" style="color:#f97316">${avg(rigidity)}</div>
       <div class="rng">min ${minVal(rigidity)} — max ${maxVal(rigidity)}</div>
     </div>
     <div class="smini">
-      <div class="nm">Bradykinésie</div>
+      <div class="nm">Bradykinesia</div>
       <div class="av" style="color:#eab308">${avg(bradykinesia)}</div>
       <div class="rng">min ${minVal(bradykinesia)} — max ${maxVal(bradykinesia)}</div>
     </div>
     <div class="smini">
-      <div class="nm">Démarche</div>
+      <div class="nm">Gait</div>
       <div class="av" style="color:#22c55e">${avg(gait)}</div>
       <div class="rng">min ${minVal(gait)} — max ${maxVal(gait)}</div>
     </div>
     <div class="smini">
-      <div class="nm">Équilibre</div>
+      <div class="nm">Balance</div>
       <div class="av" style="color:#3b82f6">${avg(balance)}</div>
       <div class="rng">min ${minVal(balance)} — max ${maxVal(balance)}</div>
     </div>
@@ -231,31 +229,31 @@ const generateReport = () => {
 
   <!-- ── Tremor Evolution Chart (full width) ── -->
   <div class="chart-full">
-    <div class="ch-title">Évolution du tremblement par session</div>
+    <div class="ch-title">Tremor Evolution by Session</div>
     <canvas id="tremorChart" height="80"></canvas>
   </div>
 
   <!-- ── All Scores + Severity Doughnut ── -->
   <div class="charts-2">
     <div class="chart-card">
-      <div class="ch-title">Évolution de tous les scores moteurs</div>
+      <div class="ch-title">All Motor Scores Evolution</div>
       <canvas id="allScoresChart" height="200"></canvas>
     </div>
     <div class="chart-card">
-      <div class="ch-title">Répartition des sévérités</div>
+      <div class="ch-title">Severity Distribution</div>
       <canvas id="severityChart" height="200"></canvas>
     </div>
   </div>
 
   <!-- ── Sessions Table ── -->
   <div class="tbl-wrap">
-    <div class="ch-title">Détail des sessions (20 dernières)</div>
+    <div class="ch-title">Session Details (last 20)</div>
     <table>
       <thead>
         <tr>
-          <th>Date</th><th>Heure</th><th>Trembl.</th><th>Rigidité</th>
-          <th>Bradyk.</th><th>Démarche</th><th>Équilibre</th>
-          <th>Sévérité</th><th>Confiance</th><th>Alerte</th>
+          <th>Date</th><th>Time</th><th>Tremor</th><th>Rigidity</th>
+          <th>Bradyk.</th><th>Gait</th><th>Balance</th>
+          <th>Severity</th><th>Confidence</th><th>Alert</th>
         </tr>
       </thead>
       <tbody>
@@ -265,8 +263,8 @@ const generateReport = () => {
   </div>
 
   <footer>
-    Rapport généré automatiquement par le système de surveillance Parkinson-IA · ${reportDate}<br>
-    Ce document est à usage médical confidentiel.
+    Report automatically generated by the Parkinson-AI monitoring system · ${reportDate}<br>
+    This document is for confidential medical use only.
   </footer>
 
 </div><!-- .page -->
@@ -297,7 +295,7 @@ const generateReport = () => {
   // Tremor evolution
   new Chart(document.getElementById('tremorChart'), {
     type: 'line',
-    data: { labels: LABELS, datasets: [line('Tremblement', T, '#ef4444')] },
+    data: { labels: LABELS, datasets: [line('Tremor', T, '#ef4444')] },
     options: {
       responsive: true,
       plugins: { legend: { display: false } },
@@ -314,11 +312,11 @@ const generateReport = () => {
     data: {
       labels: LABELS,
       datasets: [
-        line('Tremblement',  T, '#ef4444'),
-        line('Rigidité',     R, '#f97316'),
-        line('Bradykinésie', B, '#eab308'),
-        line('Démarche',     G, '#22c55e'),
-        line('Équilibre',    E, '#3b82f6'),
+        line('Tremor',       T, '#ef4444'),
+        line('Rigidity',     R, '#f97316'),
+        line('Bradykinesia', B, '#eab308'),
+        line('Gait',         G, '#22c55e'),
+        line('Balance',      E, '#3b82f6'),
       ],
     },
     options: {

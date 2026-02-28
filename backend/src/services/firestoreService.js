@@ -70,9 +70,46 @@ const bulkSyncAnalyses = async (records) => {
   return records.length;
 };
 
+const CSV_HEADERS = [
+  'timestamp',
+  'overall_severity',
+  'confidence_score',
+  'tremor_score',
+  'rigidity_score',
+  'bradykinesia_score',
+  'gait_score',
+  'balance_score',
+  'needs_alert',
+  'observations',
+  'recommendation',
+  'alert_message',
+  'voice_message',
+];
+
+const csvEscape = (val) => {
+  const str = String(val ?? '');
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+};
+
+/**
+ * Fetch all analyses from Firestore and return as a CSV string.
+ * @returns {Promise<string>}
+ */
+const getCsvString = async () => {
+  const records = await getAnalysesFromCloud();
+  const rows = records.map((r) =>
+    CSV_HEADERS.map((h) => csvEscape(r[h])).join(',')
+  );
+  return [CSV_HEADERS.join(','), ...rows].join('\n') + '\n';
+};
+
 module.exports = {
   saveAnalysis,
   getAnalysesFromCloud,
   saveReportMetadata,
   bulkSyncAnalyses,
+  getCsvString,
 };
