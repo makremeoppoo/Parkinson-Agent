@@ -19,6 +19,8 @@
   "author": "amica",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/firestore": "^8.3.0",
+    "@google/adk": "^0.4.0",
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
