@@ -9,7 +9,7 @@ global.__basedir = __dirname;
 var corsOptions = {
   origin: process.env.FRONTEND_URL || 'http://localhost:3031',
   methods: ['POST', 'GET'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 

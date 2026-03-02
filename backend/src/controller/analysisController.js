@@ -4,6 +4,7 @@ const {
   saveAnalysis,
   getAnalysesFromCloud,
   getCsvString,
+  saveReportMetadata,
 } = require('../services/firestoreService');
 const { runTask } = require('../services/adkAgent');
 
@@ -16,9 +17,10 @@ const { runTask } = require('../services/adkAgent');
 const analyzeFrame = async (req, res) => {
   try {
     const { frame, mimeType, currentLang } = req.body;
+    const { uid } = req.user;
 
     if (!frame) {
-      return res.status(400).send({ message: 'Aucune frame fournie.' });
+      return res.status(400).send({ message: 'No frame provided.' });
     }
 
     const analysis = await geminiService.analyzeFrame(
@@ -27,15 +29,15 @@ const analyzeFrame = async (req, res) => {
       mimeType || 'video/webm'
     );
 
-    // Persist to Firestore
-    saveAnalysis({ ...analysis, timestamp: new Date().toISOString() })
-      .then((docId) => console.log(`[Firestore] Analysis saved – doc: ${docId}`))
+    // Persist to Firestore scoped to this user
+    saveAnalysis({ ...analysis, timestamp: new Date().toISOString() }, uid)
+      .then((docId) => console.log(`[Firestore] Analysis saved – doc: ${docId} user: ${uid}`))
       .catch((err)  => console.warn('[Firestore] Save failed (non-blocking):', err.message));
 
     res.status(200).send({ data: analysis });
   } catch (err) {
     console.error('[analyzeFrame]', err);
-    res.status(500).send({ message: `Analyse échouée : ${err.message}` });
+    res.status(500).send({ message: `Analysis failed: ${err.message}` });
   }
 };
 
@@ -43,31 +45,33 @@ const analyzeFrame = async (req, res) => {
 
 /**
  * GET /results
- * Returns all Firestore analysis records as JSON.
+ * Returns all Firestore analysis records for the authenticated user as JSON.
  */
-const listResults = async (_req, res) => {
+const listResults = async (req, res) => {
   try {
-    const records = await getAnalysesFromCloud();
+    const { uid } = req.user;
+    const records = await getAnalysesFromCloud(uid);
     res.status(200).json(records);
   } catch (err) {
     console.error('[listResults]', err);
-    res.status(500).json({ message: `Lecture échouée : ${err.message}` });
+    res.status(500).json({ message: `Read failed: ${err.message}` });
   }
 };
 
 /**
  * GET /results/export
- * Returns all Firestore analysis records as a downloadable CSV file.
+ * Returns all Firestore analysis records for the user as a downloadable CSV.
  */
-const exportCsv = async (_req, res) => {
+const exportCsv = async (req, res) => {
   try {
-    const csv = await getCsvString();
+    const { uid } = req.user;
+    const csv = await getCsvString(uid);
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="results.csv"');
     res.status(200).send(csv);
   } catch (err) {
     console.error('[exportCsv]', err);
-    res.status(500).json({ message: `Export échoué : ${err.message}` });
+    res.status(500).json({ message: `Export failed: ${err.message}` });
   }
 };
 
@@ -75,15 +79,16 @@ const exportCsv = async (_req, res) => {
  * GET /results/report
  * Returns a self-contained HTML medical report with Chart.js charts.
  */
-const getReport = async (_req, res) => {
+const getReport = async (req, res) => {
   try {
-    const records = await getAnalysesFromCloud();
+    const { uid } = req.user;
+    const records = await getAnalysesFromCloud(uid);
     const html    = generateReport(records);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(html);
   } catch (err) {
     console.error('[getReport]', err);
-    res.status(500).json({ message: `Rapport échoué : ${err.message}` });
+    res.status(500).json({ message: `Report failed: ${err.message}` });
   }
 };
 
@@ -91,15 +96,19 @@ const getReport = async (_req, res) => {
 
 /**
  * POST /results/save-report-cloud
- * Uses the ADK Runner to generate the HTML report and save its metadata to Firestore.
+ * Generates the HTML report, saves metadata to Firestore, returns HTML.
  */
 const saveReportCloud = async (req, res) => {
   try {
-    const filename = `rapport-${new Date().toISOString().replace(/[:.]/g, '-')}.html`;
+    const { uid } = req.user;
+    const filename = `report-${new Date().toISOString().replace(/[:.]/g, '-')}.html`;
 
-    await runTask(`Save the medical report to Firestore with filename: ${filename}`);
+    await runTask(
+      `Save the medical report to Firestore with filename: ${filename}`,
+      uid
+    );
 
-    const records = await getAnalysesFromCloud();
+    const records = await getAnalysesFromCloud(uid);
     const html    = generateReport(records);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -107,23 +116,25 @@ const saveReportCloud = async (req, res) => {
     res.status(200).send(html);
   } catch (err) {
     console.error('[saveReportCloud]', err);
-    res.status(500).json({ message: `Sauvegarde cloud échouée : ${err.message}` });
+    res.status(500).json({ message: `Cloud save failed: ${err.message}` });
   }
 };
 
 /**
  * GET /results/cloud
- * Uses the ADK Runner to fetch all analysis records stored in Firestore.
+ * Uses the ADK Runner to fetch all analysis records for the user from Firestore.
  */
-const getCloudResults = async (_req, res) => {
+const getCloudResults = async (req, res) => {
   try {
+    const { uid } = req.user;
     const agentResponse = await runTask(
-      'Fetch all Parkinson analysis records from Firestore using get_cloud_analyses.'
+      'Fetch all Parkinson analysis records from Firestore using get_cloud_analyses.',
+      uid
     );
     res.status(200).json({ agentResponse });
   } catch (err) {
     console.error('[getCloudResults]', err);
-    res.status(500).json({ message: `Lecture cloud échouée : ${err.message}` });
+    res.status(500).json({ message: `Cloud read failed: ${err.message}` });
   }
 };
 

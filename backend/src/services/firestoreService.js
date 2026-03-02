@@ -5,70 +5,97 @@ const db = new Firestore({
   keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
 });
 
-const ANALYSES_COLLECTION = process.env.FIRESTORE_COLLECTION || 'parkinson_analyses';
-const REPORTS_COLLECTION  = 'parkinson_reports';
+// ── Collection helpers ────────────────────────────────────────────────────────
 
 /**
- * Save one analysis record to Firestore.
- * @param {object} analysis - The Gemini analysis result
+ * Returns the analyses subcollection for a specific user.
+ * Path: users/{userId}/analyses
+ */
+const analysesCol = (userId) =>
+  db.collection('users').doc(userId).collection('analyses');
+
+/**
+ * Returns the reports subcollection for a specific user.
+ * Path: users/{userId}/reports
+ */
+const reportsCol = (userId) =>
+  db.collection('users').doc(userId).collection('reports');
+
+// ── Analyses ──────────────────────────────────────────────────────────────────
+
+/**
+ * Save one analysis record under the user's subcollection.
+ * @param {object} analysis
+ * @param {string} userId - Firebase UID
  * @returns {string} Firestore document ID
  */
-const saveAnalysis = async (analysis) => {
+const saveAnalysis = async (analysis, userId) => {
   const entry = {
     ...analysis,
-    timestamp:  analysis.timestamp || new Date().toISOString(),
-    savedAt:    Firestore.Timestamp.now(),
+    userId,
+    timestamp: analysis.timestamp || new Date().toISOString(),
+    savedAt:   Firestore.Timestamp.now(),
   };
-  const docRef = await db.collection(ANALYSES_COLLECTION).add(entry);
+  const docRef = await analysesCol(userId).add(entry);
   return docRef.id;
 };
 
 /**
- * Retrieve all analysis records from Firestore (newest first).
+ * Retrieve all analysis records for a user (newest first).
+ * @param {string} userId
  * @returns {Array}
  */
-const getAnalysesFromCloud = async () => {
-  const snapshot = await db
-    .collection(ANALYSES_COLLECTION)
+const getAnalysesFromCloud = async (userId) => {
+  const snapshot = await analysesCol(userId)
     .orderBy('savedAt', 'desc')
     .get();
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
+// ── Reports ───────────────────────────────────────────────────────────────────
+
 /**
- * Save report metadata to Firestore.
+ * Save report metadata under the user's subcollection.
  * @param {string} filename
  * @param {number} totalSessions
+ * @param {string} userId
  * @returns {string} Firestore document ID
  */
-const saveReportMetadata = async (filename, totalSessions) => {
+const saveReportMetadata = async (filename, totalSessions, userId) => {
   const entry = {
     filename,
     totalSessions,
+    userId,
     type:        'html_report',
     generatedAt: Firestore.Timestamp.now(),
   };
-  const docRef = await db.collection(REPORTS_COLLECTION).add(entry);
+  const docRef = await reportsCol(userId).add(entry);
   return docRef.id;
 };
 
+// ── Bulk sync ─────────────────────────────────────────────────────────────────
+
 /**
- * Sync an array of local records to Firestore (bulk write).
- * @param {Array} records
- * @returns {number} Number of documents written
+ * Bulk-write an array of records into the user's analyses subcollection.
+ * @param {Array}  records
+ * @param {string} userId
+ * @returns {number}
  */
-const bulkSyncAnalyses = async (records) => {
+const bulkSyncAnalyses = async (records, userId) => {
   const batch = db.batch();
   records.forEach((record) => {
-    const ref = db.collection(ANALYSES_COLLECTION).doc();
+    const ref = analysesCol(userId).doc();
     batch.set(ref, {
       ...record,
+      userId,
       savedAt: Firestore.Timestamp.now(),
     });
   });
   await batch.commit();
   return records.length;
 };
+
+// ── CSV export ────────────────────────────────────────────────────────────────
 
 const CSV_HEADERS = [
   'timestamp',
@@ -95,11 +122,12 @@ const csvEscape = (val) => {
 };
 
 /**
- * Fetch all analyses from Firestore and return as a CSV string.
+ * Fetch all analyses for a user and return as a CSV string.
+ * @param {string} userId
  * @returns {Promise<string>}
  */
-const getCsvString = async () => {
-  const records = await getAnalysesFromCloud();
+const getCsvString = async (userId) => {
+  const records = await getAnalysesFromCloud(userId);
   const rows = records.map((r) =>
     CSV_HEADERS.map((h) => csvEscape(r[h])).join(',')
   );

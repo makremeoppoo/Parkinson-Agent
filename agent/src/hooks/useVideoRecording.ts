@@ -51,7 +51,7 @@ const blobToBase64 = (blob: Blob): Promise<string> =>
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useVideoRecording() {
+export function useVideoRecording(getToken: () => Promise<string>) {
   const [status,       setStatus]       = useState<ScanStatus>("idle");
   const [countdown,    setCountdown]    = useState(0);
   const [recordedUrl,  setRecordedUrl]  = useState<string | null>(null);
@@ -124,10 +124,14 @@ export function useVideoRecording() {
     setUploadStatus("uploading");
     try {
       const base64 = await blobToBase64(blobRef.current);
+      const token  = await getToken();
       const res = await fetch(ANALYZE_URL, {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ frame: base64, mimeType: "video/webm", currentLang: LANG }),
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ frame: base64, mimeType: "video/webm", currentLang: LANG }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = (await res.json()).data as AnalysisResult;

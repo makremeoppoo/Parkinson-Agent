@@ -1,4 +1,6 @@
-# Agent Parkinson — AI Motor Symptom Detection
+<!-- @format -->
+
+# Agent Parkinson-Doctor — AI Motor Symptom Detection
 
 An AI-powered web agent that detects Parkinson's disease motor symptoms in real time using a webcam. The agent records a short video of the patient's hands, sends it to a Gemini-powered backend, and returns scored analysis with a spoken voice report.
 
@@ -78,17 +80,17 @@ doctor-parkinson/
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
-| Icons | Lucide React |
-| Voice output | Web Speech API (browser TTS) |
-| Video capture | MediaRecorder API |
-| Backend | Node.js, Express |
-| AI model | Gemini 2.5 Flash (`@google/generative-ai`) |
-| Report charts | Chart.js |
-| Containerization | Docker (multi-stage build) |
-| Cloud hosting | Google Cloud Run |
+| Layer            | Technology                                 |
+| ---------------- | ------------------------------------------ |
+| Frontend         | React 18, TypeScript, Vite, Tailwind CSS   |
+| Icons            | Lucide React                               |
+| Voice output     | Web Speech API (browser TTS)               |
+| Video capture    | MediaRecorder API                          |
+| Backend          | Node.js, Express                           |
+| AI model         | Gemini 2.5 Flash (`@google/generative-ai`) |
+| Report charts    | Chart.js                                   |
+| Containerization | Docker (multi-stage build)                 |
+| Cloud hosting    | Google Cloud Run                           |
 
 ---
 
@@ -111,6 +113,7 @@ node server.js
 ```
 
 **backend/.env**
+
 ```env
 API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
@@ -127,6 +130,7 @@ npm run dev
 ```
 
 **agent/.env** (optional — defaults to `http://localhost:8000`)
+
 ```env
 VITE_SERVER_URL=http://localhost:1000
 ```
@@ -206,28 +210,29 @@ gcloud run services update parkinson-backend \
 
 ### Docker files reference
 
-| File | Purpose |
-|---|---|
-| `backend/Dockerfile` | Multi-stage build, runs Express on port 8080 |
-| `backend/.dockerignore` | Excludes `node_modules`, `.env`, `data/` |
-| `agent/Dockerfile` | Builds React with Vite, serves with nginx on port 8080 |
-| `agent/nginx.conf` | SPA fallback routing + cache headers |
-| `agent/.dockerignore` | Excludes `node_modules`, `dist`, `.env` |
+| File                    | Purpose                                                |
+| ----------------------- | ------------------------------------------------------ |
+| `backend/Dockerfile`    | Multi-stage build, runs Express on port 8080           |
+| `backend/.dockerignore` | Excludes `node_modules`, `.env`, `data/`               |
+| `agent/Dockerfile`      | Builds React with Vite, serves with nginx on port 8080 |
+| `agent/nginx.conf`      | SPA fallback routing + cache headers                   |
+| `agent/.dockerignore`   | Excludes `node_modules`, `dist`, `.env`                |
 
 ---
 
 ## API Reference
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/analyze-frame` | Analyze base64 video for Parkinson symptoms |
-| `GET` | `/results` | List all saved sessions as JSON |
-| `GET` | `/results/export` | Download all sessions as CSV |
-| `GET` | `/results/report` | View HTML medical report with charts |
+| Method | Endpoint          | Description                                 |
+| ------ | ----------------- | ------------------------------------------- |
+| `POST` | `/analyze-frame`  | Analyze base64 video for Parkinson symptoms |
+| `GET`  | `/results`        | List all saved sessions as JSON             |
+| `GET`  | `/results/export` | Download all sessions as CSV                |
+| `GET`  | `/results/report` | View HTML medical report with charts        |
 
 ### POST /analyze-frame
 
 **Request body:**
+
 ```json
 {
   "frame": "<base64 encoded video/webm>",
@@ -237,6 +242,7 @@ gcloud run services update parkinson-backend \
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -275,12 +281,12 @@ gcloud run services update parkinson-backend \
 
 Each motor indicator is scored **0–3**:
 
-| Score | Meaning |
-|---|---|
-| 0 | Absent — no symptoms detected |
-| 1 | Mild — subtle or intermittent |
-| 2 | Moderate — clearly present *(triggers alert)* |
-| 3 | Severe — significantly impacting movement |
+| Score | Meaning                                       |
+| ----- | --------------------------------------------- |
+| 0     | Absent — no symptoms detected                 |
+| 1     | Mild — subtle or intermittent                 |
+| 2     | Moderate — clearly present _(triggers alert)_ |
+| 3     | Severe — significantly impacting movement     |
 
 > **Disclaimer:** This tool is for research and monitoring assistance only. It is not a substitute for professional medical diagnosis.
 

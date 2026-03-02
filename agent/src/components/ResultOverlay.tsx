@@ -134,15 +134,6 @@ export function ResultOverlay({
           <RotateCcw className='w-5 h-5' />
           RESET
         </button>
-
-        <a
-          href={`${CONFIG.serverUrl}/results/report`}
-          target='_blank'
-          rel='noopener noreferrer'
-          className='flex items-center gap-2 bg-violet-800 hover:bg-violet-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 border border-violet-600 hover:border-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.2)] hover:shadow-[0_0_30px_rgba(139,92,246,0.4)]'>
-          <FileBarChart2 className='w-5 h-5' />
-          RAPPORT
-        </a>
       </div>
 
       {/* ── Analysis results (shown after Send) ────────────────────────────── */}
