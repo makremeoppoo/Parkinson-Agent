@@ -1,12 +1,14 @@
 import React from "react";
 import { HandGuide } from "./HandGuide";
+import type { ScanMode } from "../hooks/useVideoRecording";
 
 interface ScanningOverlayProps {
   countdown: number;
   videoRef: React.RefObject<HTMLVideoElement>;
+  scanMode?: ScanMode;
 }
 
-export function ScanningOverlay({ countdown, videoRef }: ScanningOverlayProps) {
+export function ScanningOverlay({ countdown, videoRef, scanMode = 'hands' }: ScanningOverlayProps) {
   return (
     <div className='absolute inset-0 z-30 bg-black'>
       {/* Live full-screen video */}
@@ -19,11 +21,25 @@ export function ScanningOverlay({ countdown, videoRef }: ScanningOverlayProps) {
         style={{ transform: "scaleX(-1)" }}
       />
 
-      {/* Hand guides */}
-      <div className='absolute inset-0 flex items-center justify-around px-16 pointer-events-none'>
-        <HandGuide />
-        <HandGuide flip />
-      </div>
+      {/* Hand guides (hands mode only) */}
+      {scanMode === 'hands' && (
+        <div className='absolute inset-0 flex items-center justify-around px-16 pointer-events-none'>
+          <HandGuide />
+          <HandGuide flip />
+        </div>
+      )}
+
+      {/* Body silhouette guide (body mode only) */}
+      {scanMode === 'body' && (
+        <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+          <div style={{
+            width: '38%', maxWidth: 260, aspectRatio: '9/16',
+            border: '2px dashed rgba(99,102,241,0.55)',
+            borderRadius: 18,
+            boxShadow: '0 0 28px rgba(99,102,241,0.25)',
+          }} />
+        </div>
+      )}
 
       {/* Scan line */}
       <div className='absolute inset-0 pointer-events-none overflow-hidden'>
@@ -50,7 +66,9 @@ export function ScanningOverlay({ countdown, videoRef }: ScanningOverlayProps) {
       {/* Instruction */}
       <div className='absolute bottom-6 left-0 right-0 text-center z-10'>
         <p className='text-blue-300 font-mono text-sm bg-black/60 backdrop-blur-sm inline-block px-5 py-2 rounded-full border border-blue-500/20'>
-          Align both hands on the guides
+          {scanMode === 'body'
+            ? 'Stand back — show your full body to the camera'
+            : 'Align both hands on the guides'}
         </p>
       </div>
     </div>

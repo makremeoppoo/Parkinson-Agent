@@ -84,7 +84,7 @@ export function PatientLinkSession({ linkToken }: PatientLinkSessionProps) {
 
   const {
     status, countdown, recordedUrl, uploadStatus, analysis, videoRef,
-    startRecording, sendToBackend, reset,
+    startRecording, sendToBackend, reset, scanMode, setScanMode,
   } = useVideoRecording({ type: 'link', linkToken });
 
   const handleOpenReport = () => {
@@ -161,16 +161,23 @@ export function PatientLinkSession({ linkToken }: PatientLinkSessionProps) {
       {/* Main scan area */}
       <main className='flex-1 grid grid-cols-1 lg:grid-cols-[1fr_400px_1fr] h-full relative'>
         <div className='h-full border-r border-slate-800/50 relative order-2 lg:order-1'>
-          <HandPanel side='left' status={status} label='LEFT HAND' />
+          <HandPanel side='left' status={status} label={scanMode === 'body' ? 'LEFT SIDE' : 'LEFT HAND'} scanMode={scanMode} />
         </div>
         <div className='h-full relative z-20 order-1 lg:order-2 border-b lg:border-b-0 border-slate-800'>
-          <AgentAvatar status={status} onStart={startRecording} onReset={reset} onGuide={handleGuide} />
+          <AgentAvatar
+            status={status}
+            onStart={startRecording}
+            onReset={reset}
+            onGuide={handleGuide}
+            scanMode={scanMode}
+            onModeChange={setScanMode}
+          />
         </div>
         <div className='h-full border-l border-slate-800/50 relative order-3'>
-          <HandPanel side='right' status={status} label='RIGHT HAND' />
+          <HandPanel side='right' status={status} label={scanMode === 'body' ? 'RIGHT SIDE' : 'RIGHT HAND'} scanMode={scanMode} />
         </div>
 
-        {status === 'scanning' && <ScanningOverlay countdown={countdown} videoRef={videoRef} />}
+        {status === 'scanning' && <ScanningOverlay countdown={countdown} videoRef={videoRef} scanMode={scanMode} />}
         {status === 'complete' && recordedUrl && (
           <ResultOverlay
             recordedUrl={recordedUrl}

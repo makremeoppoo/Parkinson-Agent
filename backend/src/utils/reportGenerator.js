@@ -15,7 +15,7 @@ const ds     = (records, key) => records.map((r) => Number(r[key] ?? 0));
 const lKey = (records, k) => records.map((r) => Number(r.left_hand?.[k]  ?? r[k] ?? 0));
 const rKey = (records, k) => records.map((r) => Number(r.right_hand?.[k] ?? r[k] ?? 0));
 
-/** Build and return a self-contained HTML medical report with per-hand breakdown. */
+/** Build and return a self-contained HTML medical report with per-hand + body/core breakdown. */
 const generateReport = (records) => {
   const reportDate = new Date().toLocaleString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long',
@@ -55,6 +55,30 @@ const generateReport = (records) => {
   const rRigid   = rKey(records, 'rigidity_score');
   const rBradyk  = rKey(records, 'bradykinesia_score');
 
+  // ── Body / core scores ────────────────────────────────────────────────────
+  const hasBodyScans = records.some((r) => r.posture_score !== undefined);
+  const posture    = ds(records, 'posture_score');
+  const facial     = ds(records, 'facial_score');
+  const armSwing   = ds(records, 'arm_swing_score');
+  const headTremor = ds(records, 'head_tremor_score');
+
+  // Body-only records (for body-specific stats)
+  const bodyRecs = records.filter((r) => r.posture_score !== undefined);
+  const bPosture    = bodyRecs.map((r) => Number(r.posture_score    ?? 0));
+  const bFacial     = bodyRecs.map((r) => Number(r.facial_score     ?? 0));
+  const bArmSwing   = bodyRecs.map((r) => Number(r.arm_swing_score  ?? 0));
+  const bHeadTremor = bodyRecs.map((r) => Number(r.head_tremor_score ?? 0));
+
+  // Body severity distribution
+  const bodySevCounts = {};
+  bodyRecs.forEach((r) => {
+    const sev = String(r.body_severity || 'unknown').toLowerCase();
+    bodySevCounts[sev] = (bodySevCounts[sev] || 0) + 1;
+  });
+  const bodySevLabels = Object.keys(bodySevCounts);
+  const bodySevData   = Object.values(bodySevCounts);
+  const bodySevColors = bodySevLabels.map((l) => SEVERITY_COLORS[l] || '#94a3b8');
+
   // ── Severity distribution ─────────────────────────────────────────────────
   const severityCounts = {};
   records.forEach((r) => {
@@ -69,6 +93,9 @@ const generateReport = (records) => {
   const totalSessions = records.length;
 
   // ── Table rows (last 20, newest first) ───────────────────────────────────
+  const badge = (label, color) =>
+    `<span style="padding:1px 7px;border-radius:9999px;font-size:.68rem;font-weight:700;background:${color}22;color:${color};border:1px solid ${color}44">${label}</span>`;
+
   const tableRows = records.slice().reverse().slice(0, 20).map((r, i) => {
     const d       = new Date(r.timestamp);
     const dateStr = d.toLocaleDateString('en-US');
@@ -83,8 +110,15 @@ const generateReport = (records) => {
     const lSevC = SEVERITY_COLORS[lSev.toLowerCase()] || '#94a3b8';
     const rSevC = SEVERITY_COLORS[rSev.toLowerCase()] || '#94a3b8';
 
-    const badge = (label, color) =>
-      `<span style="padding:1px 7px;border-radius:9999px;font-size:.68rem;font-weight:700;background:${color}22;color:${color};border:1px solid ${color}44">${label}</span>`;
+    const bodySev  = r.body_severity || '—';
+    const bodySevC = SEVERITY_COLORS[bodySev.toLowerCase()] || '#94a3b8';
+
+    const bodyColumns = hasBodyScans ? `
+      <td>${r.posture_score     ?? '—'}</td>
+      <td>${r.facial_score      ?? '—'}</td>
+      <td>${r.arm_swing_score   ?? '—'}</td>
+      <td>${r.head_tremor_score ?? '—'}</td>
+      <td>${r.body_severity ? badge(bodySev, bodySevC) : '—'}</td>` : '';
 
     return `<tr style="background:${rowBg}">
       <td>${dateStr}</td><td>${timeStr}</td>
@@ -96,8 +130,9 @@ const generateReport = (records) => {
       <td>${r.right_hand?.rigidity_score     ?? r.rigidity_score     ?? '—'}</td>
       <td>${r.right_hand?.bradykinesia_score ?? r.bradykinesia_score ?? '—'}</td>
       <td>${badge(rSev, rSevC)}</td>
-      <td>${r.gait_score ?? '—'}</td>
+      <td>${r.gait_score    ?? '—'}</td>
       <td>${r.balance_score ?? '—'}</td>
+      ${bodyColumns}
       <td>${badge(sev, sevColor)}</td>
       <td>${r.confidence_score || '—'}</td>
       <td>${isAlert
@@ -106,7 +141,62 @@ const generateReport = (records) => {
     </tr>`;
   }).join('\n');
 
+  const tableBodyHeader = hasBodyScans ? `
+          <th class="bh" colspan="5">Body / Core</th>` : '';
+  const tableBodySubHeader = hasBodyScans ? `
+          <th class="bh">Posture</th><th class="bh">Facial</th><th class="bh">Arm Sw.</th><th class="bh">Head Tr.</th><th class="bh">Body Sev.</th>` : '';
+
   const j = JSON.stringify;
+
+  // ── Body section HTML (only when body scans exist) ────────────────────────
+  const bodySectionHtml = hasBodyScans ? `
+
+  <!-- ── Body / Core Assessment ── -->
+  <div class="section-heading">🧍 Body / Core Assessment (${bodyRecs.length} body scan${bodyRecs.length !== 1 ? 's' : ''})</div>
+  <div class="body-metrics-row">
+    <div class="bm-panel">
+      <div class="bm-title">Posture</div>
+      <div class="bm-val" style="color:#6366f1">${avg(bPosture)}</div>
+      <div class="bm-rng">min ${minVal(bPosture)} — max ${maxVal(bPosture)}</div>
+    </div>
+    <div class="bm-panel">
+      <div class="bm-title">Facial Mask</div>
+      <div class="bm-val" style="color:#8b5cf6">${avg(bFacial)}</div>
+      <div class="bm-rng">min ${minVal(bFacial)} — max ${maxVal(bFacial)}</div>
+    </div>
+    <div class="bm-panel">
+      <div class="bm-title">Arm Swing</div>
+      <div class="bm-val" style="color:#a78bfa">${avg(bArmSwing)}</div>
+      <div class="bm-rng">min ${minVal(bArmSwing)} — max ${maxVal(bArmSwing)}</div>
+    </div>
+    <div class="bm-panel">
+      <div class="bm-title">Head Tremor</div>
+      <div class="bm-val" style="color:#c4b5fd">${avg(bHeadTremor)}</div>
+      <div class="bm-rng">min ${minVal(bHeadTremor)} — max ${maxVal(bHeadTremor)}</div>
+    </div>
+    <div class="bm-panel">
+      <div class="bm-title">Gait</div>
+      <div class="bm-val" style="color:#22c55e">${avg(ds(bodyRecs, 'gait_score'))}</div>
+      <div class="bm-rng">min ${minVal(ds(bodyRecs, 'gait_score'))} — max ${maxVal(ds(bodyRecs, 'gait_score'))}</div>
+    </div>
+    <div class="bm-panel">
+      <div class="bm-title">Balance</div>
+      <div class="bm-val" style="color:#3b82f6">${avg(ds(bodyRecs, 'balance_score'))}</div>
+      <div class="bm-rng">min ${minVal(ds(bodyRecs, 'balance_score'))} — max ${maxVal(ds(bodyRecs, 'balance_score'))}</div>
+    </div>
+  </div>
+
+  <!-- ── Body charts ── -->
+  <div class="charts-2" style="margin-bottom:2rem">
+    <div class="chart-card body-chart">
+      <div class="ch-title indigo">🧍 Body Score Evolution</div>
+      <canvas id="bodyScoresChart" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="ch-title">Body Severity Distribution</div>
+      <canvas id="bodySeverityChart" height="200"></canvas>
+    </div>
+  </div>` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -137,6 +227,7 @@ const generateReport = (records) => {
     .card.red    { border-color: #ef4444; }
     .card.orange { border-color: #f97316; }
     .card.green  { border-color: #22c55e; }
+    .card.indigo { border-color: #6366f1; }
     .card .lbl { font-size: .72rem; color: #64748b; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
     .card .val { font-size: 2rem; font-weight: 700; margin-top: .2rem; }
     .card .sm  { font-size: .78rem; color: #94a3b8; margin-top: .1rem; }
@@ -157,6 +248,14 @@ const generateReport = (records) => {
     .hm .av { font-size: 1.5rem; font-weight: 700; margin: .15rem 0; }
     .hm .rng { font-size: .65rem; color: #94a3b8; }
 
+    /* ── Body / Core metrics row ── */
+    .body-metrics-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: .75rem; margin-bottom: 2rem; }
+    .bm-panel { background: white; border-top: 4px solid #6366f1; border-radius: 10px;
+                padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); text-align: center; }
+    .bm-title { font-size: .65rem; color: #6366f1; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; margin-bottom: .3rem; }
+    .bm-val   { font-size: 1.5rem; font-weight: 700; }
+    .bm-rng   { font-size: .62rem; color: #94a3b8; margin-top: .1rem; }
+
     /* ── Chart panels ── */
     .chart-full { background: white; border-radius: 10px; padding: 1.5rem;
                   box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 2rem; }
@@ -164,12 +263,14 @@ const generateReport = (records) => {
     .charts-3   { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 2rem; }
     .chart-card { background: white; border-radius: 10px; padding: 1.5rem;
                   box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .chart-card.left  { border-top: 3px solid #3b82f6; }
-    .chart-card.right { border-top: 3px solid #7c3aed; }
+    .chart-card.left   { border-top: 3px solid #3b82f6; }
+    .chart-card.right  { border-top: 3px solid #7c3aed; }
+    .chart-card.body-chart { border-top: 3px solid #6366f1; }
     .ch-title { font-size: .82rem; color: #475569; text-transform: uppercase;
                 letter-spacing: .06em; font-weight: 600; margin-bottom: 1rem; }
     .ch-title.blue   { color: #2563eb; }
     .ch-title.purple { color: #7c3aed; }
+    .ch-title.indigo { color: #6366f1; }
 
     /* ── Score mini stats (overall) ── */
     .scores { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
@@ -188,6 +289,7 @@ const generateReport = (records) => {
             font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; }
     th.lh { background: #eff6ff; color: #2563eb; }
     th.rh { background: #f5f3ff; color: #7c3aed; }
+    th.bh { background: #eef2ff; color: #6366f1; }
     td    { padding: .5rem .65rem; border-bottom: 1px solid #f1f5f9; }
 
     /* ── Section heading ── */
@@ -199,11 +301,15 @@ const generateReport = (records) => {
     footer { text-align: center; color: #94a3b8; font-size: .75rem;
              padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
 
+    @media (max-width: 900px) {
+      .body-metrics-row { grid-template-columns: repeat(3, 1fr); }
+    }
+
     @media print {
       body { background: white; padding: 0; }
       .page { max-width: none; }
       .hdr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .card, .chart-card, .chart-full, .tbl-wrap, .smini, .hand-panel { page-break-inside: avoid; }
+      .card, .chart-card, .chart-full, .tbl-wrap, .smini, .hand-panel, .bm-panel { page-break-inside: avoid; }
     }
   </style>
 </head>
@@ -214,7 +320,7 @@ const generateReport = (records) => {
   <div class="hdr">
     <div>
       <h1>Medical Report – Parkinson Monitoring</h1>
-      <div class="sub">Automated AI-powered motor symptom analysis · Left &amp; Right hand breakdown</div>
+      <div class="sub">Automated AI-powered motor symptom analysis · Hand scan &amp; Full-body scan</div>
     </div>
     <div class="meta">
       <strong>Generated on</strong>
@@ -239,15 +345,21 @@ const generateReport = (records) => {
       <div class="val" style="color:#f97316">${alertCount}</div>
       <div class="sm">${totalSessions > 0 ? Math.round(alertCount / totalSessions * 100) : 0}% of sessions</div>
     </div>
+    ${hasBodyScans ? `
+    <div class="card indigo">
+      <div class="lbl">Body Scans</div>
+      <div class="val" style="color:#6366f1">${bodyRecs.length}</div>
+      <div class="sm">full-body analyses</div>
+    </div>` : `
     <div class="card green">
       <div class="lbl">Avg. Balance</div>
       <div class="val" style="color:#22c55e">${avg(balance)}</div>
       <div class="sm">out of 3 · min ${minVal(balance)}</div>
-    </div>
+    </div>`}
   </div>
 
   <!-- ── Left / Right Hand Comparison ── -->
-  <div class="section-heading">Per-Hand Analysis</div>
+  <div class="section-heading">✋🤚 Per-Hand Analysis</div>
   <div class="hands-row">
     <div class="hand-panel left">
       <div class="hand-title">✋ Left Hand</div>
@@ -304,6 +416,8 @@ const generateReport = (records) => {
     </div>
   </div>
 
+  ${bodySectionHtml}
+
   <!-- ── Overall Scores ── -->
   <div class="section-heading">Overall Motor Scores</div>
   <div class="scores">
@@ -358,6 +472,7 @@ const generateReport = (records) => {
           <th class="rh" colspan="4">Right Hand</th>
           <th rowspan="2">Gait</th>
           <th rowspan="2">Balance</th>
+          ${tableBodyHeader}
           <th rowspan="2">Overall</th>
           <th rowspan="2">Conf.</th>
           <th rowspan="2">Alert</th>
@@ -365,6 +480,7 @@ const generateReport = (records) => {
         <tr>
           <th class="lh">Tremor</th><th class="lh">Rigid.</th><th class="lh">Brady.</th><th class="lh">Severity</th>
           <th class="rh">Tremor</th><th class="rh">Rigid.</th><th class="rh">Brady.</th><th class="rh">Severity</th>
+          ${tableBodySubHeader}
         </tr>
       </thead>
       <tbody>
@@ -400,10 +516,21 @@ const generateReport = (records) => {
   const RR = ${j(rRigid)};
   const RB = ${j(rBradyk)};
 
+  // Body / core (all sessions, 0 for non-body records)
+  const BP = ${j(posture)};
+  const BF = ${j(facial)};
+  const BA = ${j(armSwing)};
+  const BH = ${j(headTremor)};
+
   // Severity
   const SEV_L = ${j(sevLabels)};
   const SEV_D = ${j(sevData)};
   const SEV_C = ${j(sevColors)};
+
+  // Body severity
+  const BSEV_L = ${j(bodySevLabels)};
+  const BSEV_D = ${j(bodySevData)};
+  const BSEV_C = ${j(bodySevColors)};
 
   const line = (label, data, color, dash) => ({
     label, data,
@@ -430,11 +557,7 @@ const generateReport = (records) => {
         line('Bradykinesia', LB, '#eab308', [2, 2]),
       ],
     },
-    options: {
-      responsive: true,
-      plugins: { legend: legendOpts },
-      scales: { y: yAxis, x: xAxis },
-    },
+    options: { responsive: true, plugins: { legend: legendOpts }, scales: { y: yAxis, x: xAxis } },
   });
 
   // Right hand chart
@@ -448,11 +571,7 @@ const generateReport = (records) => {
         line('Bradykinesia', RB, '#eab308', [2, 2]),
       ],
     },
-    options: {
-      responsive: true,
-      plugins: { legend: legendOpts },
-      scales: { y: yAxis, x: xAxis },
-    },
+    options: { responsive: true, plugins: { legend: legendOpts }, scales: { y: yAxis, x: xAxis } },
   });
 
   // All scores evolution
@@ -468,11 +587,7 @@ const generateReport = (records) => {
         line('Balance',      E, '#3b82f6'),
       ],
     },
-    options: {
-      responsive: true,
-      plugins: { legend: legendOpts },
-      scales: { y: yAxis, x: xAxis },
-    },
+    options: { responsive: true, plugins: { legend: legendOpts }, scales: { y: yAxis, x: xAxis } },
   });
 
   // Severity doughnut
@@ -483,11 +598,42 @@ const generateReport = (records) => {
       datasets: [{ data: SEV_D, backgroundColor: SEV_C, borderWidth: 2, borderColor: '#fff' }],
     },
     options: {
-      responsive: true,
-      cutout: '60%',
+      responsive: true, cutout: '60%',
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
     },
   });
+
+  // Body score evolution chart (only if body scans exist)
+  if (document.getElementById('bodyScoresChart')) {
+    new Chart(document.getElementById('bodyScoresChart'), {
+      type: 'line',
+      data: {
+        labels: LABELS,
+        datasets: [
+          line('Posture',     BP, '#6366f1'),
+          line('Facial',      BF, '#8b5cf6', [4, 2]),
+          line('Arm Swing',   BA, '#a78bfa', [2, 2]),
+          line('Head Tremor', BH, '#c4b5fd', [6, 2]),
+        ],
+      },
+      options: { responsive: true, plugins: { legend: legendOpts }, scales: { y: yAxis, x: xAxis } },
+    });
+  }
+
+  // Body severity doughnut (only if body scans exist)
+  if (document.getElementById('bodySeverityChart')) {
+    new Chart(document.getElementById('bodySeverityChart'), {
+      type: 'doughnut',
+      data: {
+        labels: BSEV_L,
+        datasets: [{ data: BSEV_D, backgroundColor: BSEV_C, borderWidth: 2, borderColor: '#fff' }],
+      },
+      options: {
+        responsive: true, cutout: '60%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      },
+    });
+  }
 </script>
 </body>
 </html>`;

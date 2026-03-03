@@ -5,13 +5,13 @@ import { CONFIG } from "../global-config";
 const ANALYZE_URL         = `${CONFIG.serverUrl}/analyze-frame`;
 const PATIENT_ANALYZE_URL = `${CONFIG.serverUrl}/patient-analyze`;
 
-const SCAN_DURATION_MS = 7000;
 const LANG = "en";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type ScanStatus   = "idle" | "scanning" | "complete";
 export type UploadStatus = "idle" | "uploading" | "done" | "error";
+export type ScanMode     = "hands" | "body";
 
 export interface HandScores {
   tremor_score:       number;
@@ -35,6 +35,12 @@ export interface AnalysisResult {
   needs_alert:        boolean;
   alert_message:      string;
   voice_message:      string;
+  // Body scan fields
+  posture_score?:     number;
+  facial_score?:      number;
+  arm_swing_score?:   number;
+  head_tremor_score?: number;
+  body_severity?:     string;
 }
 
 // ── TTS helper ────────────────────────────────────────────────────────────────
@@ -72,6 +78,7 @@ export function useVideoRecording(auth: AuthMode) {
   const [recordedUrl,  setRecordedUrl]  = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [analysis,     setAnalysis]     = useState<AnalysisResult | null>(null);
+  const [scanMode,     setScanMode]     = useState<ScanMode>("hands");
 
   const videoRef         = useRef<HTMLVideoElement>(null);
   const streamRef        = useRef<MediaStream | null>(null);
@@ -83,13 +90,14 @@ export function useVideoRecording(auth: AuthMode) {
   // ── Start camera + MediaRecorder ──────────────────────────────────────────
   const startRecording = async () => {
     try {
+      const duration = scanMode === "body" ? 10000 : 7000;
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       streamRef.current = stream;
       chunksRef.current = [];
       blobRef.current   = null;
 
       setStatus("scanning");
-      setCountdown(SCAN_DURATION_MS / 1000);
+      setCountdown(duration / 1000);
       setRecordedUrl(null);
       setUploadStatus("idle");
       setAnalysis(null);
@@ -125,7 +133,7 @@ export function useVideoRecording(auth: AuthMode) {
       setTimeout(() => {
         if (countdownRef.current) clearInterval(countdownRef.current);
         if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
-      }, SCAN_DURATION_MS);
+      }, duration);
 
     } catch (err) {
       console.error("Camera access denied:", err);
@@ -147,13 +155,13 @@ export function useVideoRecording(auth: AuthMode) {
       if (auth.type === 'link') {
         // Patient link mode — no Firebase auth, token in body
         url  = PATIENT_ANALYZE_URL;
-        body = { frame: base64, mimeType: "video/webm", currentLang: LANG, patientLinkToken: auth.linkToken };
+        body = { frame: base64, mimeType: "video/webm", currentLang: LANG, patientLinkToken: auth.linkToken, scanMode };
       } else {
         // Doctor mode — Firebase JWT in header
         const token = await auth.getToken();
         headers["Authorization"] = `Bearer ${token}`;
         url  = ANALYZE_URL;
-        body = { frame: base64, mimeType: "video/webm", currentLang: LANG, patientCode: auth.patientCode };
+        body = { frame: base64, mimeType: "video/webm", currentLang: LANG, patientCode: auth.patientCode, scanMode };
       }
 
       const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
@@ -202,5 +210,5 @@ export function useVideoRecording(auth: AuthMode) {
     };
   }, []);
 
-  return { status, countdown, recordedUrl, uploadStatus, analysis, videoRef, startRecording, sendToBackend, reset };
+  return { status, countdown, recordedUrl, uploadStatus, analysis, videoRef, startRecording, sendToBackend, reset, scanMode, setScanMode };
 }

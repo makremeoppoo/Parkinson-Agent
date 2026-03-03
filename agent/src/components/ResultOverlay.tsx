@@ -10,6 +10,7 @@ import {
   Volume2,
   AlertTriangle,
   FileBarChart2,
+  X,
 } from "lucide-react";
 import type { UploadStatus, AnalysisResult, HandScores } from "../hooks/useVideoRecording";
 import { CONFIG } from "../global-config";
@@ -77,6 +78,46 @@ function HandCard({ side, hand }: { side: 'LEFT' | 'RIGHT'; hand: HandScores }) 
   );
 }
 
+/** Compact card for full-body scan scores */
+function BodyCard({ analysis }: { analysis: AnalysisResult }) {
+  const bodySev = severityConfig[analysis.body_severity ?? ''] ?? severityConfig['None'];
+  const bodyMetrics = [
+    { label: 'Posture',     score: analysis.posture_score },
+    { label: 'Facial',      score: analysis.facial_score },
+    { label: 'Arm Swing',   score: analysis.arm_swing_score },
+    { label: 'Head Tremor', score: analysis.head_tremor_score },
+    { label: 'Gait',        score: analysis.gait_score },
+    { label: 'Balance',     score: analysis.balance_score },
+  ].filter((m) => m.score !== undefined) as { label: string; score: number }[];
+
+  return (
+    <div style={{ background: '#0f172a', border: '1px solid #6366f130', borderRadius: 12, padding: '0.9rem 1rem' }}>
+      <p style={{ color: '#818cf8', fontSize: '.7rem', fontWeight: 700,
+        textTransform: 'uppercase', letterSpacing: '.08em', margin: '0 0 .6rem' }}>
+        BODY ASSESSMENT
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '0.75rem' }}>
+        {bodyMetrics.map(({ label, score }) => (
+          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#64748b', fontSize: '.72rem' }}>{label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ScoreDots score={score} />
+              <span style={{ color: scoreColor(score), fontSize: '.72rem', fontWeight: 700, width: 10, textAlign: 'right' }}>
+                {score}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {analysis.body_severity && (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${bodySev.bg} ${bodySev.border} ${bodySev.color}`}>
+          {bodySev.label}
+        </span>
+      )}
+    </div>
+  );
+}
+
 const severityConfig: Record<
   string,
   { label: string; color: string; bg: string; border: string }
@@ -132,6 +173,13 @@ export function ResultOverlay({
 
   return (
     <div className='absolute inset-0 z-30 bg-black/92 backdrop-blur-sm flex flex-col items-center justify-start gap-5 px-8 py-8 overflow-y-auto'>
+      {/* Close button */}
+      <button
+        onClick={onReset}
+        title='Close'
+        className='absolute top-4 right-4 flex items-center justify-center w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-white transition-colors z-10'>
+        <X className='w-4 h-4' />
+      </button>
       {/* ── Title ──────────────────────────────────────────────────────────── */}
       <div className='text-center shrink-0'>
         <p className='text-xs text-emerald-400 font-mono uppercase tracking-widest mb-1'>
@@ -215,6 +263,11 @@ export function ResultOverlay({
               {analysis.left_hand  && <HandCard side='LEFT'  hand={analysis.left_hand} />}
               {analysis.right_hand && <HandCard side='RIGHT' hand={analysis.right_hand} />}
             </div>
+          )}
+
+          {/* Body assessment (body scan mode) */}
+          {(analysis.posture_score !== undefined || analysis.body_severity) && (
+            <BodyCard analysis={analysis} />
           )}
 
           {/* Severity + confidence */}

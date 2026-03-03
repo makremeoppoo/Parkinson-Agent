@@ -1,12 +1,17 @@
 import React from 'react';
 import { Bot, Play, RotateCcw, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
+import type { ScanMode } from '../hooks/useVideoRecording';
+
 interface AgentAvatarProps {
   status: 'idle' | 'scanning' | 'complete';
   onStart: () => void;
   onReset: () => void;
   onGuide: () => void;
+  scanMode: ScanMode;
+  onModeChange: (m: ScanMode) => void;
 }
-export function AgentAvatar({ status, onStart, onReset, onGuide }: AgentAvatarProps) {
+
+export function AgentAvatar({ status, onStart, onReset, onGuide, scanMode, onModeChange }: AgentAvatarProps) {
   return (
     <div className="h-full w-full max-w-md bg-slate-900 border-x border-slate-800 flex flex-col items-center justify-between py-12 px-6 relative z-10 shadow-2xl">
       {/* Header */}
@@ -29,16 +34,14 @@ export function AgentAvatar({ status, onStart, onReset, onGuide }: AgentAvatarPr
           <div
             className={`absolute inset-0 rounded-full border-2 transition-all duration-500 ${status === 'scanning' ? 'border-blue-500/50 scale-110 animate-pulse' : status === 'complete' ? 'border-emerald-500/50' : 'border-slate-700'}`} />
 
-
           <div
             className={`absolute inset-4 rounded-full border border-dashed transition-all duration-500 ${status === 'scanning' ? 'border-blue-400/30 animate-[spin_10s_linear_infinite]' : status === 'complete' ? 'border-emerald-400/30' : 'border-slate-800'}`} />
-
 
           {/* Center Content */}
           <div className="relative z-10 flex flex-col items-center justify-center text-center">
             {status === 'idle' &&
             <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-                <span className="text-4xl">👋</span>
+                <span className="text-4xl">{scanMode === 'body' ? '🧍' : '👋'}</span>
               </div>
             }
 
@@ -86,14 +89,36 @@ export function AgentAvatar({ status, onStart, onReset, onGuide }: AgentAvatarPr
       </div>
 
       {/* Controls */}
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-3">
         {status === 'idle' &&
         <>
+          {/* Scan mode toggle */}
+          <div className="flex rounded-xl border border-slate-700 overflow-hidden">
+            <button
+              onClick={() => onModeChange('hands')}
+              className={`flex-1 py-2 text-sm font-semibold transition-colors ${
+                scanMode === 'hands'
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}>
+              👋 Hand Scan
+            </button>
+            <button
+              onClick={() => onModeChange('body')}
+              className={`flex-1 py-2 text-sm font-semibold transition-colors ${
+                scanMode === 'body'
+                  ? 'bg-indigo-700 text-white'
+                  : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}>
+              🧍 Full Body
+            </button>
+          </div>
+
           <button
             onClick={onStart}
             className="w-full group relative flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] active:scale-[0.98]">
               <Play className="w-5 h-5 fill-current" />
-              START RECORDING
+              {scanMode === 'body' ? 'START BODY SCAN' : 'START RECORDING'}
           </button>
           <button
             onClick={onGuide}

@@ -36,6 +36,8 @@ export function ParkinsonAgent({
     startRecording,
     sendToBackend,
     reset,
+    scanMode,
+    setScanMode,
   } = useVideoRecording({ type: 'token', getToken, patientCode });
 
   const handleGuide = () => {
@@ -121,7 +123,7 @@ export function ParkinsonAgent({
       <main className='flex-1 grid grid-cols-1 lg:grid-cols-[1fr_400px_1fr] h-full relative'>
         {/* Left Panel */}
         <div className='h-full border-r border-slate-800/50 relative order-2 lg:order-1'>
-          <HandPanel side='left' status={status} label='LEFT HAND' />
+          <HandPanel side='left' status={status} label={scanMode === 'body' ? 'LEFT SIDE' : 'LEFT HAND'} scanMode={scanMode} />
         </div>
 
         {/* Center Panel */}
@@ -131,16 +133,18 @@ export function ParkinsonAgent({
             onStart={startRecording}
             onReset={reset}
             onGuide={handleGuide}
+            scanMode={scanMode}
+            onModeChange={setScanMode}
           />
         </div>
 
         {/* Right Panel */}
         <div className='h-full border-l border-slate-800/50 relative order-3'>
-          <HandPanel side='right' status={status} label='RIGHT HAND' />
+          <HandPanel side='right' status={status} label={scanMode === 'body' ? 'RIGHT SIDE' : 'RIGHT HAND'} scanMode={scanMode} />
         </div>
 
         {status === "scanning" && (
-          <ScanningOverlay countdown={countdown} videoRef={videoRef} />
+          <ScanningOverlay countdown={countdown} videoRef={videoRef} scanMode={scanMode} />
         )}
 
         {status === "complete" && recordedUrl && (

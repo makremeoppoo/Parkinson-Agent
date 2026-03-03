@@ -22,7 +22,7 @@ const { runTask } = require('../services/adkAgent');
  */
 const analyzeFrame = async (req, res) => {
   try {
-    const { frame, mimeType, currentLang, patientCode } = req.body;
+    const { frame, mimeType, currentLang, patientCode, scanMode } = req.body;
     const { uid } = req.user;
 
     if (!frame) {
@@ -32,7 +32,8 @@ const analyzeFrame = async (req, res) => {
     const analysis = await geminiService.analyzeFrame(
       currentLang || 'en',
       frame,
-      mimeType || 'video/webm'
+      mimeType    || 'video/webm',
+      scanMode    || 'hands'
     );
 
     const record = { ...analysis, timestamp: new Date().toISOString() };
@@ -268,7 +269,7 @@ const validatePatientSession = async (req, res) => {
  */
 const patientAnalyzeHandler = async (req, res) => {
   try {
-    const { frame, mimeType, currentLang, patientLinkToken } = req.body;
+    const { frame, mimeType, currentLang, patientLinkToken, scanMode } = req.body;
     if (!frame)            return res.status(400).json({ message: 'No frame provided.' });
     if (!patientLinkToken) return res.status(400).json({ message: 'No patient link token.' });
 
@@ -278,7 +279,8 @@ const patientAnalyzeHandler = async (req, res) => {
     const analysis = await geminiService.analyzeFrame(
       currentLang || 'en',
       frame,
-      mimeType || 'video/webm'
+      mimeType    || 'video/webm',
+      scanMode    || 'hands'
     );
 
     const record = { ...analysis, timestamp: new Date().toISOString() };
