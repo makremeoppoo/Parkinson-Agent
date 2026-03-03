@@ -11,10 +11,11 @@ const maxVal = (arr) => arr.length ? Math.max(...arr).toFixed(1) : '0';
 const minVal = (arr) => arr.length ? Math.min(...arr).toFixed(1) : '0';
 const ds     = (records, key) => records.map((r) => Number(r[key] ?? 0));
 
-/**
- * Build and return a self-contained HTML medical report.
- * @param {Array} records - Analysis records from Firestore
- */
+// Per-hand data helpers (falls back to overall score for legacy records)
+const lKey = (records, k) => records.map((r) => Number(r.left_hand?.[k]  ?? r[k] ?? 0));
+const rKey = (records, k) => records.map((r) => Number(r.right_hand?.[k] ?? r[k] ?? 0));
+
+/** Build and return a self-contained HTML medical report with per-hand breakdown. */
 const generateReport = (records) => {
   const reportDate = new Date().toLocaleString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long',
@@ -31,20 +32,30 @@ const generateReport = (records) => {
 </body></html>`;
   }
 
-  const labels       = records.map((r, i) => {
+  const labels = records.map((r, i) => {
     const d    = new Date(r.timestamp);
     const date = d.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit' });
     const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     return `S${i + 1} (${date} ${time})`;
   });
 
-  const tremor      = ds(records, 'tremor_score');
-  const rigidity    = ds(records, 'rigidity_score');
-  const bradykinesia= ds(records, 'bradykinesia_score');
-  const gait        = ds(records, 'gait_score');
-  const balance     = ds(records, 'balance_score');
+  // ── Overall scores ────────────────────────────────────────────────────────
+  const tremor       = ds(records, 'tremor_score');
+  const rigidity     = ds(records, 'rigidity_score');
+  const bradykinesia = ds(records, 'bradykinesia_score');
+  const gait         = ds(records, 'gait_score');
+  const balance      = ds(records, 'balance_score');
 
-  // Severity distribution
+  // ── Per-hand scores ───────────────────────────────────────────────────────
+  const lTremor  = lKey(records, 'tremor_score');
+  const lRigid   = lKey(records, 'rigidity_score');
+  const lBradyk  = lKey(records, 'bradykinesia_score');
+
+  const rTremor  = rKey(records, 'tremor_score');
+  const rRigid   = rKey(records, 'rigidity_score');
+  const rBradyk  = rKey(records, 'bradykinesia_score');
+
+  // ── Severity distribution ─────────────────────────────────────────────────
   const severityCounts = {};
   records.forEach((r) => {
     const sev = String(r.overall_severity || 'unknown').toLowerCase();
@@ -54,37 +65,47 @@ const generateReport = (records) => {
   const sevData   = Object.values(severityCounts);
   const sevColors = sevLabels.map((l) => SEVERITY_COLORS[l] || '#94a3b8');
 
-  const alertCount   = records.filter((r) => r.needs_alert === true || r.needs_alert === 'true').length;
+  const alertCount    = records.filter((r) => r.needs_alert === true || r.needs_alert === 'true').length;
   const totalSessions = records.length;
 
-  // Table rows (last 20, newest first)
+  // ── Table rows (last 20, newest first) ───────────────────────────────────
   const tableRows = records.slice().reverse().slice(0, 20).map((r, i) => {
-    const d      = new Date(r.timestamp);
+    const d       = new Date(r.timestamp);
     const dateStr = d.toLocaleDateString('en-US');
     const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     const isAlert = r.needs_alert === true || r.needs_alert === 'true';
     const sev     = r.overall_severity || '—';
     const sevColor = SEVERITY_COLORS[sev.toLowerCase()] || '#94a3b8';
-    const conf    = r.confidence_score || '—';
     const rowBg   = isAlert ? '#fef2f2' : i % 2 === 0 ? '#f8fafc' : 'white';
+
+    const lSev = r.left_hand?.overall_severity  || '—';
+    const rSev = r.right_hand?.overall_severity || '—';
+    const lSevC = SEVERITY_COLORS[lSev.toLowerCase()] || '#94a3b8';
+    const rSevC = SEVERITY_COLORS[rSev.toLowerCase()] || '#94a3b8';
+
+    const badge = (label, color) =>
+      `<span style="padding:1px 7px;border-radius:9999px;font-size:.68rem;font-weight:700;background:${color}22;color:${color};border:1px solid ${color}44">${label}</span>`;
+
     return `<tr style="background:${rowBg}">
-      <td>${dateStr}</td>
-      <td>${timeStr}</td>
-      <td>${r.tremor_score ?? '—'}</td>
-      <td>${r.rigidity_score ?? '—'}</td>
-      <td>${r.bradykinesia_score ?? '—'}</td>
+      <td>${dateStr}</td><td>${timeStr}</td>
+      <td>${r.left_hand?.tremor_score       ?? r.tremor_score       ?? '—'}</td>
+      <td>${r.left_hand?.rigidity_score     ?? r.rigidity_score     ?? '—'}</td>
+      <td>${r.left_hand?.bradykinesia_score ?? r.bradykinesia_score ?? '—'}</td>
+      <td>${badge(lSev, lSevC)}</td>
+      <td>${r.right_hand?.tremor_score       ?? r.tremor_score       ?? '—'}</td>
+      <td>${r.right_hand?.rigidity_score     ?? r.rigidity_score     ?? '—'}</td>
+      <td>${r.right_hand?.bradykinesia_score ?? r.bradykinesia_score ?? '—'}</td>
+      <td>${badge(rSev, rSevC)}</td>
       <td>${r.gait_score ?? '—'}</td>
       <td>${r.balance_score ?? '—'}</td>
-      <td><span style="padding:2px 10px;border-radius:9999px;font-size:.72rem;font-weight:700;
-          background:${sevColor}22;color:${sevColor};border:1px solid ${sevColor}44">${sev}</span></td>
-      <td>${conf}</td>
+      <td>${badge(sev, sevColor)}</td>
+      <td>${r.confidence_score || '—'}</td>
       <td>${isAlert
         ? '<span style="color:#ef4444;font-weight:700">⚠ Yes</span>'
         : '<span style="color:#22c55e">No</span>'}</td>
     </tr>`;
   }).join('\n');
 
-  // Serialise for Chart.js
   const j = JSON.stringify;
 
   return `<!DOCTYPE html>
@@ -96,15 +117,13 @@ const generateReport = (records) => {
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body   { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; color: #1e293b; padding: 2rem; }
-    .page  { max-width: 1100px; margin: 0 auto; }
+    body  { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; color: #1e293b; padding: 2rem; }
+    .page { max-width: 1200px; margin: 0 auto; }
 
     /* ── Header ── */
-    .hdr {
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    .hdr { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
       color: white; border-radius: 12px; padding: 2rem 2.5rem; margin-bottom: 2rem;
-      display: flex; justify-content: space-between; align-items: flex-end;
-    }
+      display: flex; justify-content: space-between; align-items: flex-end; }
     .hdr h1   { font-size: 1.8rem; font-weight: 700; letter-spacing: -.02em; }
     .hdr .sub { color: #94a3b8; font-size: .9rem; margin-top: .2rem; }
     .hdr .meta { text-align: right; font-size: .82rem; color: #cbd5e1; line-height: 1.6; }
@@ -122,40 +141,69 @@ const generateReport = (records) => {
     .card .val { font-size: 2rem; font-weight: 700; margin-top: .2rem; }
     .card .sm  { font-size: .78rem; color: #94a3b8; margin-top: .1rem; }
 
-    /* ── Score mini stats ── */
-    .scores { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
-    .smini  { background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); text-align: center; }
-    .smini .nm  { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 600; }
-    .smini .av  { font-size: 1.6rem; font-weight: 700; margin: .2rem 0; }
-    .smini .rng { font-size: .7rem; color: #94a3b8; }
+    /* ── Hand comparison row ── */
+    .hands-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2rem; }
+    .hand-panel { background: white; border-radius: 10px; padding: 1.25rem 1.5rem;
+                  box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .hand-panel.left  { border-top: 4px solid #3b82f6; }
+    .hand-panel.right { border-top: 4px solid #7c3aed; }
+    .hand-title { font-size: .78rem; font-weight: 700; text-transform: uppercase;
+                  letter-spacing: .08em; margin-bottom: 1rem; }
+    .hand-panel.left  .hand-title { color: #3b82f6; }
+    .hand-panel.right .hand-title { color: #7c3aed; }
+    .hand-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+    .hm { text-align: center; }
+    .hm .nm { font-size: .65rem; color: #64748b; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+    .hm .av { font-size: 1.5rem; font-weight: 700; margin: .15rem 0; }
+    .hm .rng { font-size: .65rem; color: #94a3b8; }
 
     /* ── Chart panels ── */
     .chart-full { background: white; border-radius: 10px; padding: 1.5rem;
                   box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 2rem; }
-    .charts-2   { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 2rem; }
-    .chart-card { background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .ch-title   { font-size: .82rem; color: #475569; text-transform: uppercase;
-                  letter-spacing: .06em; font-weight: 600; margin-bottom: 1rem; }
+    .charts-2   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .charts-3   { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .chart-card { background: white; border-radius: 10px; padding: 1.5rem;
+                  box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .chart-card.left  { border-top: 3px solid #3b82f6; }
+    .chart-card.right { border-top: 3px solid #7c3aed; }
+    .ch-title { font-size: .82rem; color: #475569; text-transform: uppercase;
+                letter-spacing: .06em; font-weight: 600; margin-bottom: 1rem; }
+    .ch-title.blue   { color: #2563eb; }
+    .ch-title.purple { color: #7c3aed; }
+
+    /* ── Score mini stats (overall) ── */
+    .scores { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .smini  { background: white; border-radius: 10px; padding: 1rem;
+              box-shadow: 0 1px 3px rgba(0,0,0,.08); text-align: center; }
+    .smini .nm  { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 600; }
+    .smini .av  { font-size: 1.6rem; font-weight: 700; margin: .2rem 0; }
+    .smini .rng { font-size: .7rem; color: #94a3b8; }
 
     /* ── Table ── */
     .tbl-wrap { background: white; border-radius: 10px; padding: 1.5rem;
                 box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 2rem; overflow-x: auto; }
-    table  { width: 100%; border-collapse: collapse; font-size: .84rem; }
-    th     { background: #f8fafc; color: #475569; font-weight: 600; padding: .55rem .75rem;
-             text-align: left; border-bottom: 2px solid #e2e8f0;
-             font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
-    td     { padding: .55rem .75rem; border-bottom: 1px solid #f1f5f9; }
+    table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    th    { background: #f8fafc; color: #475569; font-weight: 600; padding: .5rem .65rem;
+            text-align: left; border-bottom: 2px solid #e2e8f0;
+            font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; }
+    th.lh { background: #eff6ff; color: #2563eb; }
+    th.rh { background: #f5f3ff; color: #7c3aed; }
+    td    { padding: .5rem .65rem; border-bottom: 1px solid #f1f5f9; }
+
+    /* ── Section heading ── */
+    .section-heading { font-size: .75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #94a3b8; margin-bottom: 1rem; padding-bottom: .4rem;
+      border-bottom: 1px solid #e2e8f0; }
 
     /* ── Footer ── */
     footer { text-align: center; color: #94a3b8; font-size: .75rem;
              padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
 
-    /* ── Print ── */
     @media print {
       body { background: white; padding: 0; }
       .page { max-width: none; }
       .hdr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .card, .chart-card, .chart-full, .tbl-wrap, .smini { page-break-inside: avoid; }
+      .card, .chart-card, .chart-full, .tbl-wrap, .smini, .hand-panel { page-break-inside: avoid; }
     }
   </style>
 </head>
@@ -166,7 +214,7 @@ const generateReport = (records) => {
   <div class="hdr">
     <div>
       <h1>Medical Report – Parkinson Monitoring</h1>
-      <div class="sub">Automated AI-powered motor symptom analysis</div>
+      <div class="sub">Automated AI-powered motor symptom analysis · Left &amp; Right hand breakdown</div>
     </div>
     <div class="meta">
       <strong>Generated on</strong>
@@ -182,7 +230,7 @@ const generateReport = (records) => {
       <div class="sm">recorded analyses</div>
     </div>
     <div class="card red">
-      <div class="lbl">Avg. Tremor</div>
+      <div class="lbl">Avg. Tremor (overall)</div>
       <div class="val" style="color:#ef4444">${avg(tremor)}</div>
       <div class="sm">out of 3 · max ${maxVal(tremor)}</div>
     </div>
@@ -198,7 +246,66 @@ const generateReport = (records) => {
     </div>
   </div>
 
-  <!-- ── Score mini stats ── -->
+  <!-- ── Left / Right Hand Comparison ── -->
+  <div class="section-heading">Per-Hand Analysis</div>
+  <div class="hands-row">
+    <div class="hand-panel left">
+      <div class="hand-title">✋ Left Hand</div>
+      <div class="hand-metrics">
+        <div class="hm">
+          <div class="nm">Tremor</div>
+          <div class="av" style="color:#ef4444">${avg(lTremor)}</div>
+          <div class="rng">min ${minVal(lTremor)} — max ${maxVal(lTremor)}</div>
+        </div>
+        <div class="hm">
+          <div class="nm">Rigidity</div>
+          <div class="av" style="color:#f97316">${avg(lRigid)}</div>
+          <div class="rng">min ${minVal(lRigid)} — max ${maxVal(lRigid)}</div>
+        </div>
+        <div class="hm">
+          <div class="nm">Bradykinesia</div>
+          <div class="av" style="color:#eab308">${avg(lBradyk)}</div>
+          <div class="rng">min ${minVal(lBradyk)} — max ${maxVal(lBradyk)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="hand-panel right">
+      <div class="hand-title">🤚 Right Hand</div>
+      <div class="hand-metrics">
+        <div class="hm">
+          <div class="nm">Tremor</div>
+          <div class="av" style="color:#ef4444">${avg(rTremor)}</div>
+          <div class="rng">min ${minVal(rTremor)} — max ${maxVal(rTremor)}</div>
+        </div>
+        <div class="hm">
+          <div class="nm">Rigidity</div>
+          <div class="av" style="color:#f97316">${avg(rRigid)}</div>
+          <div class="rng">min ${minVal(rRigid)} — max ${maxVal(rRigid)}</div>
+        </div>
+        <div class="hm">
+          <div class="nm">Bradykinesia</div>
+          <div class="av" style="color:#eab308">${avg(rBradyk)}</div>
+          <div class="rng">min ${minVal(rBradyk)} — max ${maxVal(rBradyk)}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Per-Hand Charts ── -->
+  <div class="section-heading">Hand Score Evolution</div>
+  <div class="charts-2">
+    <div class="chart-card left">
+      <div class="ch-title blue">✋ Left Hand — Tremor / Rigidity / Bradykinesia</div>
+      <canvas id="leftHandChart" height="180"></canvas>
+    </div>
+    <div class="chart-card right">
+      <div class="ch-title purple">🤚 Right Hand — Tremor / Rigidity / Bradykinesia</div>
+      <canvas id="rightHandChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Overall Scores ── -->
+  <div class="section-heading">Overall Motor Scores</div>
   <div class="scores">
     <div class="smini">
       <div class="nm">Tremor</div>
@@ -227,14 +334,8 @@ const generateReport = (records) => {
     </div>
   </div>
 
-  <!-- ── Tremor Evolution Chart (full width) ── -->
-  <div class="chart-full">
-    <div class="ch-title">Tremor Evolution by Session</div>
-    <canvas id="tremorChart" height="80"></canvas>
-  </div>
-
-  <!-- ── All Scores + Severity Doughnut ── -->
-  <div class="charts-2">
+  <!-- ── All Scores + Severity ── -->
+  <div class="charts-3">
     <div class="chart-card">
       <div class="ch-title">All Motor Scores Evolution</div>
       <canvas id="allScoresChart" height="200"></canvas>
@@ -246,14 +347,24 @@ const generateReport = (records) => {
   </div>
 
   <!-- ── Sessions Table ── -->
+  <div class="section-heading">Session Details (last 20)</div>
   <div class="tbl-wrap">
-    <div class="ch-title">Session Details (last 20)</div>
     <table>
       <thead>
         <tr>
-          <th>Date</th><th>Time</th><th>Tremor</th><th>Rigidity</th>
-          <th>Bradyk.</th><th>Gait</th><th>Balance</th>
-          <th>Severity</th><th>Confidence</th><th>Alert</th>
+          <th rowspan="2">Date</th>
+          <th rowspan="2">Time</th>
+          <th class="lh" colspan="4">Left Hand</th>
+          <th class="rh" colspan="4">Right Hand</th>
+          <th rowspan="2">Gait</th>
+          <th rowspan="2">Balance</th>
+          <th rowspan="2">Overall</th>
+          <th rowspan="2">Conf.</th>
+          <th rowspan="2">Alert</th>
+        </tr>
+        <tr>
+          <th class="lh">Tremor</th><th class="lh">Rigid.</th><th class="lh">Brady.</th><th class="lh">Severity</th>
+          <th class="rh">Tremor</th><th class="rh">Rigid.</th><th class="rh">Brady.</th><th class="rh">Severity</th>
         </tr>
       </thead>
       <tbody>
@@ -267,42 +378,80 @@ const generateReport = (records) => {
     This document is for confidential medical use only.
   </footer>
 
-</div><!-- .page -->
+</div>
 
 <script>
   const LABELS = ${j(labels)};
+
+  // Overall
   const T = ${j(tremor)};
   const R = ${j(rigidity)};
   const B = ${j(bradykinesia)};
   const G = ${j(gait)};
   const E = ${j(balance)};
+
+  // Left hand
+  const LT = ${j(lTremor)};
+  const LR = ${j(lRigid)};
+  const LB = ${j(lBradyk)};
+
+  // Right hand
+  const RT = ${j(rTremor)};
+  const RR = ${j(rRigid)};
+  const RB = ${j(rBradyk)};
+
+  // Severity
   const SEV_L = ${j(sevLabels)};
   const SEV_D = ${j(sevData)};
   const SEV_C = ${j(sevColors)};
 
-  const line = (label, data, color) => ({
+  const line = (label, data, color, dash) => ({
     label, data,
     borderColor: color,
     backgroundColor: color + '18',
     pointBackgroundColor: color,
-    pointRadius: 4, pointHoverRadius: 6,
-    borderWidth: 2, tension: 0.35, fill: true,
+    pointRadius: 3, pointHoverRadius: 5,
+    borderWidth: 2, tension: 0.35, fill: false,
+    borderDash: dash || [],
   });
 
   const yAxis = { min: 0, max: 3, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } };
-  const xAxis = { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } };
+  const xAxis = { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 9 } } };
+  const legendOpts = { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } };
 
-  // Tremor evolution
-  new Chart(document.getElementById('tremorChart'), {
+  // Left hand chart
+  new Chart(document.getElementById('leftHandChart'), {
     type: 'line',
-    data: { labels: LABELS, datasets: [line('Tremor', T, '#ef4444')] },
+    data: {
+      labels: LABELS,
+      datasets: [
+        line('Tremor',       LT, '#ef4444'),
+        line('Rigidity',     LR, '#f97316', [4, 2]),
+        line('Bradykinesia', LB, '#eab308', [2, 2]),
+      ],
+    },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { ...yAxis, title: { display: true, text: 'Score (0–3)', color: '#64748b', font: { size: 11 } } },
-        x: xAxis,
-      },
+      plugins: { legend: legendOpts },
+      scales: { y: yAxis, x: xAxis },
+    },
+  });
+
+  // Right hand chart
+  new Chart(document.getElementById('rightHandChart'), {
+    type: 'line',
+    data: {
+      labels: LABELS,
+      datasets: [
+        line('Tremor',       RT, '#ef4444'),
+        line('Rigidity',     RR, '#f97316', [4, 2]),
+        line('Bradykinesia', RB, '#eab308', [2, 2]),
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: legendOpts },
+      scales: { y: yAxis, x: xAxis },
     },
   });
 
@@ -321,7 +470,7 @@ const generateReport = (records) => {
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      plugins: { legend: legendOpts },
       scales: { y: yAxis, x: xAxis },
     },
   });

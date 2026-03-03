@@ -29,12 +29,13 @@ const analyzeFrame = async (currentLang, base64Data, mimeType) => {
       You are a compassionate medical AI assistant specialized in Parkinson's disease motor symptom detection.
       Analyze this video frame captured from a patient's camera and return ONLY a JSON response.
 
-      Focus on visible motor indicators:
-      1. TREMOR: Detect resting tremor in hands, fingers, or limbs (pill-rolling motion).
-      2. RIGIDITY & POSTURE: Assess stooped posture, reduced arm swing, stiffness.
-      3. BRADYKINESIA: Look for slow movements, reduced facial expression (hypomimia), reduced blinking.
+      Focus on visible motor indicators — evaluate LEFT and RIGHT hands independently:
+      1. TREMOR: Detect resting tremor in each hand/fingers separately (pill-rolling motion).
+      2. RIGIDITY: Assess stiffness and reduced arm swing for each side.
+      3. BRADYKINESIA: Look for slow or reduced movements in each hand.
       4. GAIT: If lower body visible, detect shuffling gait, festination, or freezing.
       5. BALANCE: Postural instability or asymmetry.
+      For left_hand and right_hand: score each indicator 0–3 independently based on what is visible for that side.
 
       Scoring:
       - Each indicator scored 0 (absent) to 3 (severe).
@@ -58,6 +59,18 @@ const analyzeFrame = async (currentLang, base64Data, mimeType) => {
 
       Return ONLY this JSON structure:
       {
+        "left_hand": {
+          "tremor_score": 0,
+          "rigidity_score": 0,
+          "bradykinesia_score": 0,
+          "overall_severity": "None | Mild | Moderate | Severe"
+        },
+        "right_hand": {
+          "tremor_score": 0,
+          "rigidity_score": 0,
+          "bradykinesia_score": 0,
+          "overall_severity": "None | Mild | Moderate | Severe"
+        },
         "tremor_score": 0,
         "rigidity_score": 0,
         "bradykinesia_score": 0,

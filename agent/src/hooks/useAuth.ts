@@ -2,17 +2,22 @@ import { useEffect, useState } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   User,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
 export interface AuthState {
-  user:             User | null;
-  loading:          boolean;
-  signInWithGoogle: () => Promise<void>;
-  signOut:          () => Promise<void>;
-  getToken:         () => Promise<string>;
+  user:               User | null;
+  loading:            boolean;
+  isDoctor:           boolean;
+  signInWithGoogle:   () => Promise<void>;
+  signInWithEmail:    (email: string, password: string) => Promise<void>;
+  registerWithEmail:  (email: string, password: string) => Promise<void>;
+  signOut:            () => Promise<void>;
+  getToken:           () => Promise<string>;
 }
 
 export function useAuth(): AuthState {
@@ -27,8 +32,19 @@ export function useAuth(): AuthState {
     return unsubscribe;
   }, []);
 
+  // Doctor = signed in with email/password (providerId === 'password')
+  const isDoctor = user?.providerData.some((p) => p.providerId === 'password') ?? false;
+
   const signInWithGoogle = async () => {
     await signInWithPopup(auth, googleProvider);
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const registerWithEmail = async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const signOut = async () => {
@@ -41,5 +57,5 @@ export function useAuth(): AuthState {
     return auth.currentUser.getIdToken();
   };
 
-  return { user, loading, signInWithGoogle, signOut, getToken };
+  return { user, loading, isDoctor, signInWithGoogle, signInWithEmail, registerWithEmail, signOut, getToken };
 }

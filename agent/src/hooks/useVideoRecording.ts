@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { CONFIG } from "../global-config";
 
-const ANALYZE_URL = `${CONFIG.serverUrl}/analyze-frame`;
+const ANALYZE_URL         = `${CONFIG.serverUrl}/analyze-frame`;
+const PATIENT_ANALYZE_URL = `${CONFIG.serverUrl}/patient-analyze`;
 
 const SCAN_DURATION_MS = 7000;
 const LANG = "en";
@@ -12,7 +13,16 @@ const LANG = "en";
 export type ScanStatus   = "idle" | "scanning" | "complete";
 export type UploadStatus = "idle" | "uploading" | "done" | "error";
 
+export interface HandScores {
+  tremor_score:       number;
+  rigidity_score:     number;
+  bradykinesia_score: number;
+  overall_severity:   string;
+}
+
 export interface AnalysisResult {
+  left_hand?:         HandScores;
+  right_hand?:        HandScores;
   tremor_score:       number;
   rigidity_score:     number;
   bradykinesia_score: number;
@@ -51,7 +61,12 @@ const blobToBase64 = (blob: Blob): Promise<string> =>
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useVideoRecording(getToken: () => Promise<string>) {
+// auth = { type:'token', getToken } for doctor  |  { type:'link', linkToken } for patient
+type AuthMode =
+  | { type: 'token'; getToken: () => Promise<string>; patientCode?: string }
+  | { type: 'link';  linkToken: string };
+
+export function useVideoRecording(auth: AuthMode) {
   const [status,       setStatus]       = useState<ScanStatus>("idle");
   const [countdown,    setCountdown]    = useState(0);
   const [recordedUrl,  setRecordedUrl]  = useState<string | null>(null);
@@ -118,21 +133,30 @@ export function useVideoRecording(getToken: () => Promise<string>) {
     }
   };
 
-  // ── ANALYSER button: send video/webm → POST /analyze-frame ────────────────
+  // ── ANALYSER button ────────────────────────────────────────────────────────
   const sendToBackend = async () => {
     if (!blobRef.current) return;
     setUploadStatus("uploading");
     try {
       const base64 = await blobToBase64(blobRef.current);
-      const token  = await getToken();
-      const res = await fetch(ANALYZE_URL, {
-        method:  "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ frame: base64, mimeType: "video/webm", currentLang: LANG }),
-      });
+
+      let url: string;
+      let headers: Record<string, string> = { "Content-Type": "application/json" };
+      let body: Record<string, unknown>;
+
+      if (auth.type === 'link') {
+        // Patient link mode — no Firebase auth, token in body
+        url  = PATIENT_ANALYZE_URL;
+        body = { frame: base64, mimeType: "video/webm", currentLang: LANG, patientLinkToken: auth.linkToken };
+      } else {
+        // Doctor mode — Firebase JWT in header
+        const token = await auth.getToken();
+        headers["Authorization"] = `Bearer ${token}`;
+        url  = ANALYZE_URL;
+        body = { frame: base64, mimeType: "video/webm", currentLang: LANG, patientCode: auth.patientCode };
+      }
+
+      const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = (await res.json()).data as AnalysisResult;
       setAnalysis(result);

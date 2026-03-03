@@ -11,10 +11,71 @@ import {
   AlertTriangle,
   FileBarChart2,
 } from "lucide-react";
-import type { UploadStatus, AnalysisResult } from "../hooks/useVideoRecording";
+import type { UploadStatus, AnalysisResult, HandScores } from "../hooks/useVideoRecording";
 import { CONFIG } from "../global-config";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+const SCORE_COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
+
+function scoreColor(score: number) {
+  return SCORE_COLORS[Math.min(Math.max(Math.round(score), 0), 3)];
+}
+
+/** Three filled/empty dots representing a 0–3 score */
+function ScoreDots({ score }: { score: number }) {
+  const col = scoreColor(score);
+  return (
+    <span style={{ display: 'inline-flex', gap: 3, verticalAlign: 'middle' }}>
+      {[0, 1, 2].map((i) => (
+        <span key={i} style={{
+          display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+          background: i < score ? col : 'transparent',
+          border: `1.5px solid ${i < score ? col : '#334155'}`,
+        }} />
+      ))}
+    </span>
+  );
+}
+
+/** Compact card for one hand's scores */
+function HandCard({ side, hand }: { side: 'LEFT' | 'RIGHT'; hand: HandScores }) {
+  const sideColor  = side === 'LEFT' ? '#60a5fa' : '#a78bfa';
+  const sevCfg     = severityConfig[hand.overall_severity] ?? severityConfig['None'];
+  const metrics: { label: string; score: number }[] = [
+    { label: 'Tremor',       score: hand.tremor_score },
+    { label: 'Rigidity',     score: hand.rigidity_score },
+    { label: 'Bradykinesia', score: hand.bradykinesia_score },
+  ];
+
+  return (
+    <div style={{
+      flex: 1, background: '#0f172a', border: `1px solid ${sideColor}30`,
+      borderRadius: 12, padding: '0.9rem 1rem',
+    }}>
+      <p style={{ color: sideColor, fontSize: '.7rem', fontWeight: 700,
+        textTransform: 'uppercase', letterSpacing: '.08em', margin: '0 0 .6rem' }}>
+        {side} HAND
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '0.75rem' }}>
+        {metrics.map(({ label, score }) => (
+          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#64748b', fontSize: '.72rem' }}>{label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ScoreDots score={score} />
+              <span style={{ color: scoreColor(score), fontSize: '.72rem', fontWeight: 700, width: 10, textAlign: 'right' }}>
+                {score}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${sevCfg.bg} ${sevCfg.border} ${sevCfg.color}`}>
+        {sevCfg.label}
+      </span>
+    </div>
+  );
+}
 
 const severityConfig: Record<
   string,
@@ -147,6 +208,14 @@ export function ResultOverlay({
             </span>
             <div className='flex-1 h-px bg-slate-800' />
           </div>
+
+          {/* Per-hand breakdown */}
+          {(analysis.left_hand || analysis.right_hand) && (
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {analysis.left_hand  && <HandCard side='LEFT'  hand={analysis.left_hand} />}
+              {analysis.right_hand && <HandCard side='RIGHT' hand={analysis.right_hand} />}
+            </div>
+          )}
 
           {/* Severity + confidence */}
           <div className='flex items-center justify-between bg-slate-900 border border-slate-800 rounded-xl px-5 py-4'>

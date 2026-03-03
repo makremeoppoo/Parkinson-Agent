@@ -1,6 +1,6 @@
 /** @format */
 
-import { FileBarChart2, LogOut } from "lucide-react";
+import { FileBarChart2, LogOut, UserCheck, RefreshCw } from "lucide-react";
 import { User } from "firebase/auth";
 import { HandPanel } from "./HandPanel";
 import { AgentAvatar } from "./AgentAvatar";
@@ -10,12 +10,22 @@ import { useVideoRecording, speak } from "../hooks/useVideoRecording";
 import { CONFIG } from "../global-config";
 
 interface ParkinsonAgentProps {
-  getToken:  () => Promise<string>;
-  onSignOut: () => Promise<void>;
-  user:      User;
+  getToken:        () => Promise<string>;
+  onSignOut:       () => Promise<void>;
+  user:            User;
+  isDoctor?:       boolean;
+  patientCode?:    string;
+  onChangePatient?: () => void;
 }
 
-export function ParkinsonAgent({ getToken, onSignOut, user }: ParkinsonAgentProps) {
+export function ParkinsonAgent({
+  getToken,
+  onSignOut,
+  user,
+  isDoctor,
+  patientCode,
+  onChangePatient,
+}: ParkinsonAgentProps) {
   const {
     status,
     countdown,
@@ -26,7 +36,7 @@ export function ParkinsonAgent({ getToken, onSignOut, user }: ParkinsonAgentProp
     startRecording,
     sendToBackend,
     reset,
-  } = useVideoRecording(getToken);
+  } = useVideoRecording({ type: 'token', getToken, patientCode });
 
   const handleGuide = () => {
     speak(
@@ -37,12 +47,13 @@ export function ParkinsonAgent({ getToken, onSignOut, user }: ParkinsonAgentProp
     );
   };
 
-  // Append the Firebase ID token as a query param so the browser can open
-  // the report directly without needing a custom Authorization header.
+  // Append the Firebase ID token + optional patientCode as query params so the
+  // browser can open the report directly without a custom Authorization header.
   const handleOpenReport = async () => {
     try {
       const token = await getToken();
-      const url   = `${CONFIG.serverUrl}/results/report?token=${encodeURIComponent(token)}`;
+      let url = `${CONFIG.serverUrl}/results/report?token=${encodeURIComponent(token)}`;
+      if (patientCode) url += `&patientCode=${encodeURIComponent(patientCode)}`;
       window.open(url, "_blank");
     } catch (err) {
       console.error("[handleOpenReport]", err);
@@ -54,8 +65,8 @@ export function ParkinsonAgent({ getToken, onSignOut, user }: ParkinsonAgentProp
       <div className='h-1 w-full bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900' />
 
       <div className='flex items-center justify-between px-4 py-2 border-b border-slate-800/50'>
-        {/* User info */}
-        <div className='flex items-center gap-2'>
+        {/* User / patient info */}
+        <div className='flex items-center gap-3'>
           {user.photoURL && (
             <img
               src={user.photoURL}
@@ -63,19 +74,40 @@ export function ParkinsonAgent({ getToken, onSignOut, user }: ParkinsonAgentProp
               style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid #334155" }}
             />
           )}
-          <span style={{ fontSize: ".8rem", color: "#94a3b8" }}>
-            {user.displayName || user.email}
-          </span>
+          <div>
+            <span style={{ fontSize: ".8rem", color: "#94a3b8" }}>
+              {user.displayName || user.email}
+            </span>
+            {isDoctor && patientCode && (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginTop: "0.1rem" }}>
+                <UserCheck size={12} color="#60a5fa" />
+                <span style={{ fontSize: ".72rem", color: "#60a5fa", fontWeight: 600 }}>
+                  Patient: {patientCode}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
         <div className='flex items-center gap-2'>
+          {isDoctor && onChangePatient && (
+            <button
+              onClick={onChangePatient}
+              title='Change patient'
+              className='flex items-center gap-1 text-slate-400 hover:text-slate-200 px-3 py-2 rounded-xl text-sm transition-colors border border-slate-700 hover:border-slate-500'>
+              <RefreshCw className='w-4 h-4' />
+              Change Patient
+            </button>
+          )}
+
           <button
             onClick={handleOpenReport}
             className='flex items-center gap-2 bg-violet-800 hover:bg-violet-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 border border-violet-600 hover:border-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.2)] hover:shadow-[0_0_30px_rgba(139,92,246,0.4)]'>
             <FileBarChart2 className='w-4 h-4' />
             REPORT
           </button>
+
           <button
             onClick={onSignOut}
             title='Sign out'
