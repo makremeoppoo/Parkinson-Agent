@@ -4,28 +4,30 @@
 #
 # Usage:
 #   chmod +x deploy.sh
+#   cp deploy.env.example deploy.env   # fill in your values
 #   ./deploy.sh
 #
-# Prerequisites: gcloud CLI authenticated, project set to agentparkinson
+# Prerequisites: gcloud CLI authenticated, deploy.env present
 
 set -euo pipefail
 
-# ── Config ────────────────────────────────────────────────────────────────────
-GCP_PROJECT="agentparkinson"
-REGION="us-central1"
+# ── Load secrets from deploy.env ──────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${SCRIPT_DIR}/deploy.env"
+
+if [[ ! -f "${ENV_FILE}" ]]; then
+  echo "ERROR: ${ENV_FILE} not found. Copy deploy.env.example and fill in your values." >&2
+  exit 1
+fi
+
+# shellcheck source=deploy.env
+source "${ENV_FILE}"
+
+# ── Derived config ─────────────────────────────────────────────────────────────
 BACKEND_IMAGE="gcr.io/${GCP_PROJECT}/parkinson-backend"
 FRONTEND_IMAGE="gcr.io/${GCP_PROJECT}/parkinson-frontend"
 BACKEND_SERVICE="parkinson-backend"
 FRONTEND_SERVICE="parkinson-frontend"
-BACKEND_URL="https://parkinson-backend-1096813203174.us-central1.run.app"
-
-# ── Firebase Web App config (baked into frontend at build time) ───────────────
-VITE_FIREBASE_API_KEY="AIzaSyBlYw01ybA1ka8wrcAcQJ3lOoNOpgIzZkw"
-VITE_FIREBASE_AUTH_DOMAIN="parkinson-doctor.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="parkinson-doctor"
-VITE_FIREBASE_STORAGE_BUCKET="parkinson-doctor.firebasestorage.app"
-VITE_FIREBASE_MESSAGING_SENDER_ID="203853981295"
-VITE_FIREBASE_APP_ID="1:203853981295:web:996166fce7092f5abe0f9a"
 
 echo "==> [1/4] Building backend image..."
 gcloud builds submit ./backend \
@@ -38,7 +40,7 @@ gcloud run deploy "${BACKEND_SERVICE}" \
   --region "${REGION}" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars "FIREBASE_AUTH_PROJECT_ID=parkinson-doctor,FRONTEND_URL=https://parkinson-frontend-1096813203174.us-central1.run.app" \
+  --set-env-vars "FIREBASE_AUTH_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID},FRONTEND_URL=${FRONTEND_URL}" \
   --project "${GCP_PROJECT}"
 
 echo "==> [3/4] Building frontend image..."
@@ -57,5 +59,5 @@ gcloud run deploy "${FRONTEND_SERVICE}" \
 
 echo ""
 echo "Deployment complete."
-echo "  Frontend: https://parkinson-frontend-1096813203174.us-central1.run.app"
+echo "  Frontend: ${FRONTEND_URL}"
 echo "  Backend:  ${BACKEND_URL}"
