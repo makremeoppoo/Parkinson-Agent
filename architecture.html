@@ -6,13 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agent Parkinson-Doctor — Architecture Diagram</title>
     <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
       body {
         font-family: "Segoe UI", system-ui, sans-serif;
@@ -22,249 +16,124 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 2.5rem 1.5rem 3rem;
+        padding: 2rem 2rem 2.5rem;
       }
 
       h1 {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 700;
         letter-spacing: -0.02em;
         color: #f8fafc;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.25rem;
         text-align: center;
       }
       .subtitle {
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
         text-align: center;
       }
 
+      /* ── main horizontal diagram ── */
       .diagram {
-        width: 100%;
-        max-width: 1100px;
         display: flex;
-        flex-direction: column;
-        align-items: center;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 0;
+        width: 100%;
+        max-width: 1380px;
       }
 
       /* ── box ── */
       .box {
         border-radius: 14px;
-        padding: 1rem 1.25rem;
+        padding: 0.85rem 1rem;
         border: 1px solid;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.35rem;
       }
       .box-title {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.09em;
         opacity: 0.6;
+        text-align: center;
       }
       .box-name {
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 700;
         text-align: center;
         line-height: 1.25;
       }
       .box-sub {
-        font-size: 0.7rem;
+        font-size: 0.67rem;
         opacity: 0.55;
         text-align: center;
         line-height: 1.4;
       }
-      .box-icon {
-        font-size: 1.7rem;
-        line-height: 1;
-      }
+      .box-icon { font-size: 1.5rem; line-height: 1; }
 
       /* colours */
-      .c-doctor {
-        background: #0c1f1a;
-        border-color: #0d9488;
-        color: #5eead4;
-      }
-      .c-patient {
-        background: #1a0e1e;
-        border-color: #a21caf;
-        color: #f0abfc;
-      }
-      .c-browser {
-        background: #0c1a3a;
-        border-color: #1d4ed8;
-        color: #93c5fd;
-      }
-      .c-auth {
-        background: #0a1f35;
-        border-color: #0284c7;
-        color: #7dd3fc;
-      }
-      .c-backend {
-        background: #0a2218;
-        border-color: #15803d;
-        color: #86efac;
-      }
-      .c-gemini {
-        background: #1a0f2e;
-        border-color: #7c3aed;
-        color: #c4b5fd;
-      }
-      .c-adk {
-        background: #1c0f2a;
-        border-color: #9333ea;
-        color: #d8b4fe;
-      }
-      .c-firestore {
-        background: #0f1f2e;
-        border-color: #0ea5e9;
-        color: #7dd3fc;
-      }
-      .c-cloud {
-        background: #0e1e2e;
-        border-color: #0369a1;
-        color: #38bdf8;
-      }
-      .c-tts {
-        background: #1a0e1e;
-        border-color: #a21caf;
-        color: #f0abfc;
-      }
-      .c-token {
-        background: #1a1a0a;
-        border-color: #ca8a04;
-        color: #fde047;
-      }
+      .c-doctor   { background: #0c1f1a; border-color: #0d9488; color: #5eead4; }
+      .c-patient  { background: #1a0e1e; border-color: #a21caf; color: #f0abfc; }
+      .c-browser  { background: #0c1a3a; border-color: #1d4ed8; color: #93c5fd; }
+      .c-backend  { background: #0a2218; border-color: #15803d; color: #86efac; }
+      .c-gemini   { background: #1a0f2e; border-color: #7c3aed; color: #c4b5fd; }
+      .c-adk      { background: #1c0f2a; border-color: #9333ea; color: #d8b4fe; }
+      .c-firestore{ background: #0f1f2e; border-color: #0ea5e9; color: #7dd3fc; }
+      .c-cloud    { background: #0e1e2e; border-color: #0369a1; color: #38bdf8; }
 
       /* ── chip ── */
       .chip {
         border-radius: 8px;
-        padding: 0.35rem 0.6rem;
-        font-size: 0.65rem;
+        padding: 0.3rem 0.55rem;
+        font-size: 0.62rem;
         font-weight: 600;
         text-align: center;
         line-height: 1.35;
         border: 1px solid currentColor;
         opacity: 0.9;
+        width: 100%;
       }
 
       /* ── grid helpers ── */
-      .g2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.45rem;
-        width: 100%;
-        margin-top: 0.25rem;
-      }
-      .g3 {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 0.45rem;
-        width: 100%;
-        margin-top: 0.25rem;
-      }
-      .g4 {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.45rem;
-        width: 100%;
-        margin-top: 0.25rem;
-      }
-      .g5 {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 0.4rem;
-        width: 100%;
-        margin-top: 0.25rem;
-      }
+      .g2 { display: grid; grid-template-columns: 1fr 1fr;       gap: 0.4rem; width: 100%; margin-top: 0.2rem; }
+      .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr;   gap: 0.4rem; width: 100%; margin-top: 0.2rem; }
 
-      /* ── row ── */
-      .row {
-        display: flex;
-        align-items: stretch;
-        justify-content: center;
-        gap: 1.2rem;
-        width: 100%;
-      }
-
-      /* ── vertical arrow ── */
-      .varrow {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: 0.3rem 0;
-        gap: 0;
-      }
-      .varrow-line {
-        width: 2px;
-        min-height: 18px;
-        flex: 1;
-        background: linear-gradient(180deg, #334155, #475569);
-      }
-      .varrow-tip {
-        width: 0;
-        height: 0;
-        border-left: 6px solid transparent;
-        border-right: 6px solid transparent;
-        border-top: 8px solid #475569;
-      }
-      .varrow-label {
-        font-size: 0.6rem;
-        color: #475569;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        text-align: center;
-        padding: 0.1rem 0.3rem;
-      }
-
-      /* ── horizontal arrow ── */
+      /* ── horizontal arrow between columns ── */
       .harrow {
         display: flex;
-        align-items: center;
-        gap: 0;
-        flex-shrink: 0;
-        width: 70px;
         flex-direction: column;
+        align-items: center;
         justify-content: center;
-        padding-top: 2.5rem;
-      }
-      .harrow-line {
-        height: 2px;
-        width: 100%;
-        background: linear-gradient(90deg, #334155, #475569);
-      }
-      .harrow-tip {
-        width: 0;
-        height: 0;
-        border-top: 6px solid transparent;
-        border-bottom: 6px solid transparent;
-        border-left: 8px solid #475569;
+        flex-shrink: 0;
+        width: 62px;
+        padding-top: 3rem;
+        gap: 0.15rem;
       }
       .harrow-lbl {
-        font-size: 0.58rem;
+        font-size: 0.55rem;
         color: #475569;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
         text-align: center;
         line-height: 1.3;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.15rem;
       }
 
       .divider {
         width: 100%;
         border: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        margin: 0.5rem 0 0.2rem;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        margin: 0.45rem 0 0.15rem;
       }
       .sec-lbl {
-        font-size: 0.62rem;
+        font-size: 0.6rem;
         text-transform: uppercase;
         letter-spacing: 0.07em;
         opacity: 0.5;
@@ -274,1279 +143,247 @@
 
       /* ── legend ── */
       .legend {
-        margin-top: 2.5rem;
+        margin-top: 2rem;
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
+        gap: 0.65rem;
         justify-content: center;
       }
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.7rem;
-        color: #64748b;
-      }
-      .legend-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 3px;
-        border: 1px solid currentColor;
-      }
+      .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.67rem; color: #64748b; }
+      .legend-dot  { width: 10px; height: 10px; border-radius: 3px; border: 1px solid currentColor; }
 
-      footer {
-        margin-top: 2rem;
-        font-size: 0.68rem;
-        color: #1e293b;
-        text-align: center;
-      }
+      footer { margin-top: 1.5rem; font-size: 0.65rem; color: #1e293b; text-align: center; }
 
-      .badge {
-        display: inline-block;
+      .flow-lbl {
         font-size: 0.6rem;
         font-weight: 700;
-        padding: 0.15rem 0.45rem;
-        border-radius: 999px;
-        border: 1px solid;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      /* flow label */
-      .flow-lbl {
-        font-size: 0.62rem;
-        font-weight: 700;
-        padding: 0.2rem 0.6rem;
+        padding: 0.18rem 0.55rem;
         border-radius: 999px;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         border: 1px solid;
+        margin-top: 0.3rem;
       }
     </style>
   </head>
   <body>
     <h1>Agent Parkinson-Doctor</h1>
-    <p class="subtitle">
-      System Architecture · Gemini Live Agent Challenge 2026 · Hand Scan + Full
-      Body Scan
-    </p>
+    <p class="subtitle">System Architecture · Gemini Live Agent Challenge 2026 · Hand Scan + Full Body Scan</p>
 
+    <!-- ══════════════════════════════════════════════════════════
+         HORIZONTAL FLOW: Actors → Browser → Backend → AI + DB
+    ══════════════════════════════════════════════════════════ -->
     <div class="diagram">
-      <!-- ══ ROW 1: Two actor types ══ -->
-      <div class="row" style="gap: 2.5rem; margin-bottom: 0.25rem">
-        <!-- Doctor -->
-        <div class="box c-doctor" style="width: 300px; text-align: center">
+
+      <!-- ── COL 1: ACTORS (175px) ── -->
+      <div style="display:flex;flex-direction:column;gap:0.55rem;width:175px;flex-shrink:0">
+
+        <div class="box c-doctor" style="text-align:center">
           <div class="box-icon">🩺</div>
-          <div class="box-title">Actor — authenticated</div>
+          <div class="box-title">Authenticated</div>
           <div class="box-name">Doctor</div>
-          <div class="box-sub">
-            Registers / signs in with email + password<br />Manages patients ·
-            views all reports
-          </div>
-          <div
-            style="
-              display: flex;
-              gap: 0.4rem;
-              margin-top: 0.25rem;
-              flex-wrap: wrap;
-              justify-content: center;
-            "
-          >
-            <span
-              class="flow-lbl"
-              style="border-color: #0d9488; color: #5eead4; background: #0c1f1a"
-              >Firebase Email Auth</span
-            >
-          </div>
+          <div class="box-sub">Email + password<br/>Manages patients<br/>Views all reports</div>
+          <span class="flow-lbl" style="border-color:#0d9488;color:#5eead4;background:#0c1f1a">Firebase Auth</span>
         </div>
 
-        <!-- Divider -->
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            color: #334155;
-            font-size: 1.5rem;
-            padding-bottom: 1rem;
-          "
-        >
-          VS
-        </div>
+        <div style="text-align:center;color:#334155;font-size:0.7rem;font-weight:700;padding:0.15rem 0">VS</div>
 
-        <!-- Patient -->
-        <div class="box c-patient" style="width: 300px; text-align: center">
+        <div class="box c-patient" style="text-align:center">
           <div class="box-icon">🧑‍⚕️</div>
-          <div class="box-title">Actor — no login required</div>
+          <div class="box-title">No login required</div>
           <div class="box-name">Patient</div>
-          <div class="box-sub">
-            Opens unique link generated by doctor<br />Does analysis · views own
-            results
-          </div>
-          <div
-            style="
-              display: flex;
-              gap: 0.4rem;
-              margin-top: 0.25rem;
-              flex-wrap: wrap;
-              justify-content: center;
-            "
-          >
-            <span
-              class="flow-lbl"
-              style="border-color: #ca8a04; color: #fde047; background: #1a1a0a"
-              >?pt=&lt;linkToken&gt;</span
-            >
-          </div>
+          <div class="box-sub">Opens unique link<br/>No account needed<br/>Scans from home</div>
+          <span class="flow-lbl" style="border-color:#ca8a04;color:#fde047;background:#1a1a0a">?pt=&lt;token&gt;</span>
+        </div>
+
+      </div>
+
+      <!-- Arrow 1 -->
+      <div class="harrow">
+        <div class="harrow-lbl">opens</div>
+        <div style="display:flex;align-items:center;width:100%">
+          <div style="height:2px;flex:1;background:linear-gradient(90deg,#334155,#1d4ed8)"></div>
+          <div style="width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:8px solid #1d4ed8"></div>
         </div>
       </div>
 
-      <!-- ↓ arrows -->
-      <div
-        style="
-          display: flex;
-          width: 680px;
-          justify-content: space-between;
-          padding: 0.25rem 0;
-        "
-      >
-        <div class="varrow" style="width: 300px">
-          <div class="varrow-label">Email / password</div>
-          <div class="varrow-line"></div>
-          <div class="varrow-tip"></div>
+      <!-- ── COL 2: BROWSER SPA (255px) ── -->
+      <div class="box c-browser" style="width:255px;flex-shrink:0;align-self:stretch">
+        <div class="box-title">React 18 · TypeScript · Vite · Tailwind CSS</div>
+        <div class="box-name">Browser SPA</div>
+
+        <hr class="divider"/>
+        <div class="sec-lbl" style="color:#5eead4">🩺 Doctor path</div>
+        <div class="chip" style="background:#0c1f1a;border-color:#0d9488;color:#5eead4">Login.tsx<br/>Email / Password · Sign in</div>
+        <div class="chip" style="background:#0c1f1a;border-color:#0d9488;color:#5eead4">DoctorDashboard.tsx<br/>Patient list · Add · Copy link</div>
+        <div class="chip" style="background:#0c1f1a;border-color:#0d9488;color:#5eead4">ParkinsonAgent.tsx<br/>In-office scan for patient</div>
+        <div class="chip" style="background:#0a1f35;border-color:#0284c7;color:#7dd3fc">AuthMode: token<br/>POST /analyze-frame + JWT</div>
+
+        <hr class="divider"/>
+        <div class="sec-lbl" style="color:#f0abfc">🧑‍⚕️ Patient path</div>
+        <div class="chip" style="background:#1a0e1e;border-color:#a21caf;color:#f0abfc">App.tsx detects ?pt=TOKEN<br/>PatientLinkSession.tsx</div>
+        <div class="chip" style="background:#1a1a0a;border-color:#ca8a04;color:#fde047">AuthMode: link<br/>POST /patient-analyze</div>
+
+        <hr class="divider"/>
+        <div class="sec-lbl">Shared components</div>
+        <div class="chip" style="background:#0c1a3a;border-color:#1d4ed8;color:#93c5fd">📷 MediaRecorder<br/>👋 7 s hand · 🧍 10 s body</div>
+        <div class="chip" style="background:#0c1a3a;border-color:#1d4ed8;color:#93c5fd">AgentAvatar · HandPanel<br/>ScanningOverlay · ResultOverlay</div>
+        <div class="chip" style="background:#1a0e1e;border-color:#a21caf;color:#f0abfc">🔊 Web Speech API TTS</div>
+      </div>
+
+      <!-- Arrow 2 -->
+      <div class="harrow">
+        <div class="harrow-lbl">HTTP<br/>JWT / token</div>
+        <div style="display:flex;align-items:center;width:100%">
+          <div style="height:2px;flex:1;background:linear-gradient(90deg,#334155,#15803d)"></div>
+          <div style="width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:8px solid #15803d"></div>
         </div>
-        <div class="varrow" style="width: 300px">
-          <div class="varrow-label">Unique URL token</div>
-          <div class="varrow-line"></div>
-          <div class="varrow-tip"></div>
+        <div class="harrow-lbl" style="margin-top:0.2rem">JSON<br/>result</div>
+        <div style="display:flex;align-items:center;width:100%">
+          <div style="width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:8px solid #475569"></div>
+          <div style="height:2px;flex:1;background:linear-gradient(90deg,#15803d,#334155)"></div>
         </div>
       </div>
 
-      <!-- ══ ROW 2: Frontend ══ -->
-      <div class="row">
-        <div class="box c-browser" style="width: 1060px">
-          <div class="box-title">
-            Frontend · React 18 + TypeScript + Vite + Tailwind CSS
-          </div>
-          <div class="box-name">Browser SPA</div>
+      <!-- ── COL 3: BACKEND (360px) ── -->
+      <div class="box c-backend" style="width:360px;flex-shrink:0;align-self:stretch">
+        <div class="box-title">Node.js 20 + Express · Google Cloud Run</div>
+        <div class="box-name">API Server</div>
 
-          <!-- Two UI paths side by side -->
-          <div
-            style="
-              display: grid;
-              grid-template-columns: 1fr 4px 1fr;
-              gap: 0.75rem;
-              width: 100%;
-              margin-top: 0.5rem;
-            "
-          >
-            <!-- Doctor path -->
-            <div style="display: flex; flex-direction: column; gap: 0.35rem">
-              <div class="sec-lbl" style="color: #5eead4">🩺 Doctor path</div>
-              <div
-                class="chip"
-                style="
-                  background: #0c1f1a;
-                  border-color: #0d9488;
-                  color: #5eead4;
-                "
-              >
-                Login.tsx<br />Email / Password<br />Sign in · Register
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #0c1f1a;
-                  border-color: #0d9488;
-                  color: #5eead4;
-                "
-              >
-                DoctorDashboard.tsx<br />Patient list · Add patient<br />Copy
-                link · Report
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #0c1f1a;
-                  border-color: #0d9488;
-                  color: #5eead4;
-                "
-              >
-                ParkinsonAgent.tsx<br />"Scan Now" — in-office<br />analysis for
-                a patient
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #0a1f35;
-                  border-color: #0284c7;
-                  color: #7dd3fc;
-                "
-              >
-                useVideoRecording<br />AuthMode: token<br />POST /analyze-frame
-                · JWT
-              </div>
-            </div>
+        <!-- Auth -->
+        <div style="width:100%;background:#071c12;border:1px solid #166534;border-radius:10px;padding:0.45rem 0.7rem;margin-top:0.2rem">
+          <div class="sec-lbl" style="color:#4ade80;opacity:1">🔒 verifyToken (Firebase Admin) · 🔑 patientTokens reverse-lookup</div>
+        </div>
 
-            <!-- vertical divider -->
-            <div style="background: #1e293b; border-radius: 2px"></div>
+        <!-- Doctor routes -->
+        <hr class="divider"/>
+        <div class="sec-lbl" style="color:#5eead4">Doctor routes (Firebase JWT)</div>
+        <div class="g3">
+          <div class="chip" style="background:#0a2218;border-color:#15803d;color:#86efac">POST<br/>/analyze-frame</div>
+          <div class="chip" style="background:#0a2218;border-color:#15803d;color:#86efac">GET/POST<br/>/patients</div>
+          <div class="chip" style="background:#0a2218;border-color:#15803d;color:#86efac">GET<br/>/results/report</div>
+        </div>
 
-            <!-- Patient path -->
-            <div style="display: flex; flex-direction: column; gap: 0.35rem">
-              <div class="sec-lbl" style="color: #f0abfc">🧑‍⚕️ Patient path</div>
-              <div
-                class="chip"
-                style="
-                  background: #1a0e1e;
-                  border-color: #a21caf;
-                  color: #f0abfc;
-                "
-              >
-                App.tsx detects ?pt=TOKEN<br />No Firebase auth needed<br />Validates
-                with backend
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #1a0e1e;
-                  border-color: #a21caf;
-                  color: #f0abfc;
-                "
-              >
-                PatientLinkSession.tsx<br />Scan interface<br />History · My
-                Report
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #1a1a0a;
-                  border-color: #ca8a04;
-                  color: #fde047;
-                "
-              >
-                useVideoRecording<br />AuthMode: link<br />POST /patient-analyze
-                · token in body
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #1a0e1e;
-                  border-color: #a21caf;
-                  color: #f0abfc;
-                "
-              >
-                TTS · Web Speech API<br />Voice feedback on results
-              </div>
-            </div>
-          </div>
+        <!-- Patient routes -->
+        <hr class="divider"/>
+        <div class="sec-lbl" style="color:#f0abfc">Patient routes (public — linkToken)</div>
+        <div class="g2">
+          <div class="chip" style="background:#1a0e1e;border-color:#a21caf;color:#f0abfc">POST /patient-analyze<br/>token in body</div>
+          <div class="chip" style="background:#1a0e1e;border-color:#a21caf;color:#f0abfc">GET /:token/report<br/>GET /:token/analyses</div>
+        </div>
 
-          <!-- Shared components -->
-          <hr class="divider" />
-          <div class="sec-lbl">Shared components</div>
-          <div class="g4" style="margin-top: 0.2rem">
-            <div
-              class="chip"
-              style="background: #0c1a3a; border-color: #1d4ed8; color: #93c5fd"
-            >
-              📷 Camera<br />MediaRecorder<br />7s hand · 10s body
-            </div>
-            <div
-              class="chip"
-              style="background: #0c1a3a; border-color: #1d4ed8; color: #93c5fd"
-            >
-              🎨 AgentAvatar<br />👋/🧍 Mode toggle<br />HandPanel ·
-              ScanningOverlay
-            </div>
-            <div
-              class="chip"
-              style="background: #0c1a3a; border-color: #1d4ed8; color: #93c5fd"
-            >
-              📊 ResultOverlay<br />HandCard · BodyCard<br />Severity · Scores
-            </div>
-            <div
-              class="chip"
-              style="background: #0c1a3a; border-color: #1d4ed8; color: #93c5fd"
-            >
-              🌐 global-config.ts<br />serverUrl · scanMode<br />API base
-            </div>
-          </div>
+        <!-- ADK -->
+        <hr class="divider"/>
+        <div class="sec-lbl" style="color:#d8b4fe">ADK Agent (@google/adk · LlmAgent)</div>
+        <div class="g3">
+          <div class="chip" style="background:#1c0f2a;border-color:#9333ea;color:#d8b4fe">🛠 save_<br/>analysis</div>
+          <div class="chip" style="background:#1c0f2a;border-color:#9333ea;color:#d8b4fe">🛠 save_<br/>report</div>
+          <div class="chip" style="background:#1c0f2a;border-color:#9333ea;color:#d8b4fe">🛠 get_<br/>cloud</div>
+        </div>
+
+        <!-- Report -->
+        <hr class="divider"/>
+        <div class="sec-lbl" style="color:#fbbf24">Report Generator (reportGenerator.js)</div>
+        <div class="g2">
+          <div class="chip" style="background:#1e1a0a;border-color:#ca8a04;color:#fde047">📄 Per-hand L/R<br/>Chart.js HTML</div>
+          <div class="chip" style="background:#1e0a1e;border-color:#a855f7;color:#e9d5ff">🧍 Body section<br/>Posture/Facial…</div>
         </div>
       </div>
 
-      <!-- ↓ API calls -->
-      <div
-        style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          width: 1060px;
-          padding: 0.25rem 0;
-        "
-      >
-        <div
-          style="
-            display: flex;
-            width: 100%;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-          "
-        >
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              width: 450px;
-            "
-          >
-            <div class="varrow-label">← JSON analysis + voice_message</div>
-            <div
-              style="
-                height: 2px;
-                width: 100%;
-                background: linear-gradient(90deg, #334155, #475569);
-              "
-            ></div>
-          </div>
-          <div style="width: 2px; min-height: 22px; background: #334155"></div>
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              width: 450px;
-            "
-          >
-            <div class="varrow-label">
-              POST /analyze-frame · POST /patient-analyze · GET
-              /patient-session/:token →
-            </div>
-            <div
-              style="
-                height: 2px;
-                width: 100%;
-                background: linear-gradient(90deg, #475569, #334155);
-              "
-            ></div>
-          </div>
+      <!-- Arrow 3 -->
+      <div class="harrow">
+        <div class="harrow-lbl">base64<br/>frame</div>
+        <div style="display:flex;align-items:center;width:100%">
+          <div style="height:2px;flex:1;background:linear-gradient(90deg,#334155,#7c3aed)"></div>
+          <div style="width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:8px solid #7c3aed"></div>
         </div>
-        <div
-          style="
-            width: 2px;
-            min-height: 10px;
-            background: #334155;
-            align-self: center;
-          "
-        ></div>
-        <div class="varrow-tip"></div>
+        <div class="harrow-lbl" style="margin-top:0.2rem">scored<br/>JSON</div>
+        <div style="display:flex;align-items:center;width:100%">
+          <div style="width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:8px solid #475569"></div>
+          <div style="height:2px;flex:1;background:linear-gradient(90deg,#7c3aed,#334155)"></div>
+        </div>
       </div>
 
-      <!-- ══ ROW 3: Backend ══ -->
-      <div class="row" style="align-items: flex-start">
-        <!-- Backend -->
-        <div class="box c-backend" style="flex: 1; min-width: 0">
-          <div class="box-title">
-            Backend · Node.js 20 + Express · Google Cloud Run
-          </div>
-          <div class="box-name">API Server</div>
-
-          <!-- Auth middleware -->
-          <div
-            style="
-              width: 100%;
-              background: #071c12;
-              border: 1px solid #166534;
-              border-radius: 10px;
-              padding: 0.6rem 0.75rem;
-              margin-top: 0.3rem;
-            "
-          >
-            <div class="sec-lbl" style="color: #4ade80; margin-bottom: 0.2rem">
-              🔒 Firebase Admin SDK — verifyToken middleware (doctor routes)
-            </div>
-            <div
-              style="
-                font-size: 0.63rem;
-                color: #86efac;
-                text-align: center;
-                opacity: 0.8;
-              "
-            >
-              Verifies JWT · extracts uid → scopes Firestore to that doctor
-            </div>
-          </div>
-          <div
-            style="
-              width: 100%;
-              background: #1a1a0a;
-              border: 1px solid #854d0e;
-              border-radius: 10px;
-              padding: 0.6rem 0.75rem;
-              margin-top: 0.35rem;
-            "
-          >
-            <div class="sec-lbl" style="color: #fde047; margin-bottom: 0.2rem">
-              🔑 Patient link token (public routes)
-            </div>
-            <div
-              style="
-                font-size: 0.63rem;
-                color: #fde047;
-                text-align: center;
-                opacity: 0.8;
-              "
-            >
-              Reads patientLinkToken from body → reverse-lookup in patientTokens
-              → { doctorId, patientCode }
-            </div>
-          </div>
-
-          <!-- Doctor routes -->
-          <hr class="divider" />
-          <div class="sec-lbl" style="color: #5eead4">
-            Doctor routes (JWT required)
-          </div>
-          <div class="g3" style="margin-top: 0.3rem">
-            <div
-              class="chip"
-              style="background: #0a2218; border-color: #15803d; color: #86efac"
-            >
-              POST /analyze-frame<br />video → Gemini AI<br />patientCode →
-              Firestore
-            </div>
-            <div
-              class="chip"
-              style="background: #0a2218; border-color: #15803d; color: #86efac"
-            >
-              GET /patients<br />list all patients<br />+ backfill linkToken
-            </div>
-            <div
-              class="chip"
-              style="background: #0a2218; border-color: #15803d; color: #86efac"
-            >
-              POST /patients<br />create patient<br />generate linkToken
-            </div>
-            <div
-              class="chip"
-              style="background: #0a2218; border-color: #15803d; color: #86efac"
-            >
-              GET /patients/:code<br />patient info<br />ensure linkToken
-            </div>
-            <div
-              class="chip"
-              style="background: #0a2218; border-color: #15803d; color: #86efac"
-            >
-              GET /patients/:code<br />/analyses<br />all records
-            </div>
-            <div
-              class="chip"
-              style="background: #0a2218; border-color: #15803d; color: #86efac"
-            >
-              GET /results/report<br />?patientCode=<br />HTML + Chart.js
-            </div>
-          </div>
-
-          <!-- Patient routes -->
-          <hr class="divider" />
-          <div class="sec-lbl" style="color: #f0abfc">
-            Patient routes (public — linkToken only)
-          </div>
-          <div class="g4" style="margin-top: 0.3rem">
-            <div
-              class="chip"
-              style="background: #1a0e1e; border-color: #a21caf; color: #f0abfc"
-            >
-              GET /patient-session<br />/:token<br />validate link
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0e1e; border-color: #a21caf; color: #f0abfc"
-            >
-              POST /patient-analyze<br />token in body<br />Gemini → Firestore
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0e1e; border-color: #a21caf; color: #f0abfc"
-            >
-              GET /patient-session<br />/:token/analyses<br />history list
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0e1e; border-color: #a21caf; color: #f0abfc"
-            >
-              GET /patient-session<br />/:token/report<br />HTML report
-            </div>
-          </div>
-
-          <!-- ADK -->
-          <hr class="divider" />
-          <div class="sec-lbl" style="color: #d8b4fe">ADK Agent Layer</div>
-          <div class="g2">
-            <div
-              class="chip"
-              style="background: #1c0f2a; border-color: #9333ea; color: #d8b4fe"
-            >
-              POST /results/save-report-cloud<br />ADK → save_report tool
-            </div>
-            <div
-              class="chip"
-              style="background: #1c0f2a; border-color: #9333ea; color: #d8b4fe"
-            >
-              GET /results/cloud<br />ADK → get_cloud_analyses
-            </div>
-          </div>
-
-          <!-- Report -->
-          <hr class="divider" />
-          <div class="sec-lbl" style="color: #fbbf24">Report Generator</div>
-          <div class="g2">
-            <div
-              class="chip"
-              style="background: #1e1a0a; border-color: #ca8a04; color: #fde047"
-            >
-              📄 reportGenerator.js<br />Chart.js · self-contained HTML<br />Per-hand
-              L/R charts
-            </div>
-            <div
-              class="chip"
-              style="background: #1e0a1e; border-color: #a855f7; color: #e9d5ff"
-            >
-              🧍 Body section<br />Posture/Facial/Arm/Head<br />Body severity
-              doughnut
-            </div>
-          </div>
-        </div>
-
-        <!-- Arrow: Backend → Gemini -->
-        <div class="harrow">
-          <div class="harrow-lbl">base64<br />frame</div>
-          <div style="display: flex; align-items: center; width: 100%">
-            <div
-              style="
-                height: 2px;
-                flex: 1;
-                background: linear-gradient(90deg, #334155, #7c3aed);
-              "
-            ></div>
-            <div
-              style="
-                width: 0;
-                height: 0;
-                border-top: 6px solid transparent;
-                border-bottom: 6px solid transparent;
-                border-left: 8px solid #7c3aed;
-              "
-            ></div>
-          </div>
-          <div class="harrow-lbl" style="margin-top: 0.25rem">
-            JSON<br />scores
-          </div>
-          <div style="display: flex; align-items: center; width: 100%">
-            <div
-              style="
-                width: 0;
-                height: 0;
-                border-top: 6px solid transparent;
-                border-bottom: 6px solid transparent;
-                border-right: 8px solid #475569;
-              "
-            ></div>
-            <div
-              style="
-                height: 2px;
-                flex: 1;
-                background: linear-gradient(90deg, #7c3aed, #334155);
-              "
-            ></div>
-          </div>
-        </div>
+      <!-- ── COL 4: AI + DB (220px) ── -->
+      <div style="display:flex;flex-direction:column;gap:0.55rem;width:220px;flex-shrink:0;align-self:stretch">
 
         <!-- Gemini -->
-        <div class="box c-gemini" style="width: 220px">
-          <div class="box-title">Google AI · @google/generative-ai</div>
-          <div class="box-icon">✨</div>
-          <div class="box-name">Gemini Flash</div>
-          <div class="box-sub">
-            Multimodal vision · JSON schema · scanMode param
-          </div>
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              gap: 0.3rem;
-              width: 100%;
-              margin-top: 0.35rem;
-            "
-          >
-            <div class="sec-lbl" style="color: #c4b5fd; margin-bottom: 0.1rem">
-              👋 Hand scan prompt
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0f2e; border-color: #7c3aed; color: #c4b5fd"
-            >
-              🤝 Tremor L+R (0–3)
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0f2e; border-color: #7c3aed; color: #c4b5fd"
-            >
-              💪 Rigidity L+R (0–3)
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0f2e; border-color: #7c3aed; color: #c4b5fd"
-            >
-              🐢 Bradykinesia L+R
-            </div>
-            <div
-              class="sec-lbl"
-              style="color: #c4b5fd; margin-top: 0.3rem; margin-bottom: 0.1rem"
-            >
-              🧍 Full body prompt
-            </div>
-            <div
-              class="chip"
-              style="background: #2a0f3e; border-color: #a855f7; color: #e9d5ff"
-            >
-              🧍 Posture (0–3)
-            </div>
-            <div
-              class="chip"
-              style="background: #2a0f3e; border-color: #a855f7; color: #e9d5ff"
-            >
-              😐 Facial mask (0–3)
-            </div>
-            <div
-              class="chip"
-              style="background: #2a0f3e; border-color: #a855f7; color: #e9d5ff"
-            >
-              🦾 Arm swing (0–3)
-            </div>
-            <div
-              class="chip"
-              style="background: #2a0f3e; border-color: #a855f7; color: #e9d5ff"
-            >
-              🤕 Head tremor (0–3)
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0f2e; border-color: #7c3aed; color: #c4b5fd"
-            >
-              🚶 Gait · ⚖️ Balance
-            </div>
-            <div
-              class="chip"
-              style="background: #1a0f2e; border-color: #7c3aed; color: #c4b5fd"
-            >
-              🔊 voice_message TTS
-            </div>
-          </div>
+        <div class="box c-gemini" style="flex:1">
+          <div class="box-title">@google/generative-ai</div>
+          <div class="box-icon" style="font-size:1.3rem">✨</div>
+          <div class="box-name" style="font-size:0.88rem">Gemini 2.5 Flash</div>
+          <div class="box-sub">Multimodal vision<br/>scanMode param</div>
+          <hr class="divider"/>
+          <div class="sec-lbl" style="color:#c4b5fd">👋 Hand scan prompt</div>
+          <div class="chip" style="background:#1a0f2e;border-color:#7c3aed;color:#c4b5fd">Tremor · Rigidity<br/>Bradykinesia L+R (0–3)</div>
+          <div class="sec-lbl" style="color:#e9d5ff;margin-top:0.3rem">🧍 Body scan prompt</div>
+          <div class="chip" style="background:#2a0f3e;border-color:#a855f7;color:#e9d5ff">Posture · Facial<br/>Arm swing · Head tremor (0–3)</div>
+          <div class="chip" style="background:#1a0f2e;border-color:#7c3aed;color:#c4b5fd;margin-top:0.15rem">🔊 voice_message TTS</div>
         </div>
 
-        <!-- Arrow: Backend → Firestore / ADK -->
-        <div class="harrow" style="width: 60px">
-          <div class="harrow-lbl">tools /<br />writes</div>
-          <div style="display: flex; align-items: center; width: 100%">
-            <div
-              style="
-                height: 2px;
-                flex: 1;
-                background: linear-gradient(90deg, #334155, #9333ea);
-              "
-            ></div>
-            <div
-              style="
-                width: 0;
-                height: 0;
-                border-top: 6px solid transparent;
-                border-bottom: 6px solid transparent;
-                border-left: 8px solid #9333ea;
-              "
-            ></div>
-          </div>
-          <div class="harrow-lbl" style="margin-top: 0.25rem">reads</div>
-          <div style="display: flex; align-items: center; width: 100%">
-            <div
-              style="
-                width: 0;
-                height: 0;
-                border-top: 6px solid transparent;
-                border-bottom: 6px solid transparent;
-                border-right: 8px solid #475569;
-              "
-            ></div>
-            <div
-              style="
-                height: 2px;
-                flex: 1;
-                background: linear-gradient(90deg, #9333ea, #334155);
-              "
-            ></div>
-          </div>
+        <!-- Firestore -->
+        <div class="box c-firestore">
+          <div class="box-title">Google Cloud Firestore</div>
+          <div class="box-icon" style="font-size:1.2rem">🗄️</div>
+          <div class="box-name" style="font-size:0.85rem">Firestore DB</div>
+          <div class="chip" style="background:#0f1f2e;border-color:#0ea5e9;color:#7dd3fc;text-align:left">doctors/{uid}<br/>&nbsp;patients/{code}<br/>&nbsp;&nbsp;analyses/{id}</div>
+          <div class="chip" style="background:#1a1a0a;border-color:#ca8a04;color:#fde047">patientTokens/{token}<br/>→ {doctorId, code}</div>
         </div>
 
-        <!-- ADK + Firestore stacked -->
-        <div
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            width: 240px;
-          "
-        >
-          <!-- ADK -->
-          <div class="box c-adk">
-            <div class="box-title">@google/adk · LlmAgent</div>
-            <div class="box-name" style="font-size: 0.9rem">ADK Agent</div>
-            <div
-              style="
-                display: flex;
-                flex-direction: column;
-                gap: 0.3rem;
-                width: 100%;
-                margin-top: 0.2rem;
-              "
-            >
-              <div
-                class="chip"
-                style="
-                  background: #1c0f2a;
-                  border-color: #9333ea;
-                  color: #d8b4fe;
-                "
-              >
-                🛠 save_analysis
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #1c0f2a;
-                  border-color: #9333ea;
-                  color: #d8b4fe;
-                "
-              >
-                🛠 save_report
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #1c0f2a;
-                  border-color: #9333ea;
-                  color: #d8b4fe;
-                "
-              >
-                🛠 get_cloud_analyses
-              </div>
-            </div>
-          </div>
-
-          <!-- Firestore -->
-          <div class="box c-firestore">
-            <div class="box-title">Google Cloud Firestore</div>
-            <div class="box-icon" style="font-size: 1.3rem">🗄️</div>
-            <div class="box-name" style="font-size: 0.9rem">Firestore DB</div>
-            <div
-              style="
-                display: flex;
-                flex-direction: column;
-                gap: 0.3rem;
-                width: 100%;
-                margin-top: 0.2rem;
-              "
-            >
-              <div
-                class="chip"
-                style="
-                  background: #0f1f2e;
-                  border-color: #0ea5e9;
-                  color: #7dd3fc;
-                  text-align: left;
-                "
-              >
-                doctors/{doctorId}<br />&nbsp;&nbsp;patients/{code}<br />&nbsp;&nbsp;&nbsp;&nbsp;analyses/{id}
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #1a1a0a;
-                  border-color: #ca8a04;
-                  color: #fde047;
-                "
-              >
-                patientTokens/{token}<br />→ { doctorId, patientCode }
-              </div>
-              <div
-                class="chip"
-                style="
-                  background: #0f1f2e;
-                  border-color: #0ea5e9;
-                  color: #7dd3fc;
-                "
-              >
-                users/{uid}/analyses<br />(self-service legacy)
-              </div>
-            </div>
-          </div>
+        <!-- Cloud Run -->
+        <div class="box c-cloud">
+          <div class="box-title">Google Cloud Platform</div>
+          <div class="box-icon" style="font-size:1.2rem">☁️</div>
+          <div class="box-name" style="font-size:0.85rem">Cloud Run</div>
+          <div class="chip" style="color:#38bdf8;border-color:#0369a1;background:#0e1e2e">🐳 Docker Alpine Node 20<br/>PORT 8080 · auto-scale</div>
+          <div class="chip" style="color:#38bdf8;border-color:#0369a1;background:#0e1e2e">Serverless · HTTPS<br/>Firebase Admin SDK</div>
         </div>
+
       </div>
+    </div><!-- .diagram -->
 
-      <!-- ↓ to Cloud Run -->
-      <div class="varrow" style="width: 500px">
-        <div class="varrow-label">Deployed on</div>
-        <div class="varrow-line"></div>
-        <div class="varrow-tip"></div>
-      </div>
+    <!-- ── Flow summary ── -->
+    <div style="margin-top:1.75rem;width:100%;max-width:1380px;background:#111827;border:1px solid #1e293b;border-radius:14px;padding:1rem 1.5rem">
+      <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:0.75rem;text-align:center">End-to-end user flows</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
 
-      <!-- ══ ROW 4: Cloud Run ══ -->
-      <div class="row">
-        <div
-          class="box c-cloud"
-          style="
-            width: 1060px;
-            flex-direction: row;
-            gap: 1.5rem;
-            padding: 0.9rem 1.5rem;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <div style="font-size: 1.6rem">☁️</div>
-          <div style="text-align: center">
-            <div class="box-title">Google Cloud Platform · agentparkinson</div>
-            <div class="box-name" style="font-size: 0.95rem">
-              Cloud Run · Container Registry · IAM
-            </div>
-            <div class="box-sub">
-              Serverless · auto-scale · HTTPS · pay-per-use
-            </div>
-          </div>
-          <div class="g3" style="flex: 1; gap: 0.4rem">
-            <div
-              class="chip"
-              style="color: #38bdf8; border-color: #0369a1; background: #0e1e2e"
-            >
-              🐳 Docker<br />Alpine Node 20
-            </div>
-            <div
-              class="chip"
-              style="color: #38bdf8; border-color: #0369a1; background: #0e1e2e"
-            >
-              🔑 gcs-key.json<br />Service Account
-            </div>
-            <div
-              class="chip"
-              style="color: #38bdf8; border-color: #0369a1; background: #0e1e2e"
-            >
-              ⚙️ PORT=8080<br />Env secrets
-            </div>
+        <div>
+          <div style="color:#5eead4;font-size:0.72rem;font-weight:700;margin-bottom:0.45rem">🩺 Doctor flow</div>
+          <div style="display:flex;flex-direction:column;gap:0.22rem">
+            <div style="font-size:0.7rem;color:#94a3b8">① Sign in with email + password (Firebase Auth)</div>
+            <div style="font-size:0.7rem;color:#94a3b8">② DoctorDashboard → add patient code → copy scan link</div>
+            <div style="font-size:0.7rem;color:#94a3b8">③ Choose 👋 Hand Scan (7 s) or 🧍 Full Body (10 s)</div>
+            <div style="font-size:0.7rem;color:#94a3b8">④ POST /analyze-frame + Firebase JWT + scanMode → Gemini</div>
+            <div style="font-size:0.7rem;color:#94a3b8">⑤ Results saved to Firestore · TTS reads voice_message</div>
+            <div style="font-size:0.7rem;color:#94a3b8">⑥ REPORT → self-contained HTML with Chart.js history</div>
           </div>
         </div>
-      </div>
 
-      <!-- ══ Flow summary ══ -->
-      <div
-        style="
-          margin-top: 2rem;
-          width: 100%;
-          max-width: 1060px;
-          background: #111827;
-          border: 1px solid #1e293b;
-          border-radius: 14px;
-          padding: 1.25rem 1.5rem;
-        "
-      >
-        <div
-          style="
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #475569;
-            margin-bottom: 1rem;
-            text-align: center;
-          "
-        >
-          End-to-end user flows
-        </div>
-        <div
-          style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem"
-        >
-          <!-- Doctor flow -->
-          <div>
-            <div
-              style="
-                color: #5eead4;
-                font-size: 0.75rem;
-                font-weight: 700;
-                margin-bottom: 0.6rem;
-              "
-            >
-              🩺 Doctor flow
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.3rem">
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #0c1f1a;
-                    color: #5eead4;
-                    border: 1px solid #0d9488;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >1</span
-                >
-                Register / sign in with email + password
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #0c1f1a;
-                    color: #5eead4;
-                    border: 1px solid #0d9488;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >2</span
-                >
-                Add patient with a code (P-1042 …)
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #0c1f1a;
-                    color: #5eead4;
-                    border: 1px solid #0d9488;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >3</span
-                >
-                Backend generates unique linkToken → stores in Firestore
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #0c1f1a;
-                    color: #5eead4;
-                    border: 1px solid #0d9488;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >4</span
-                >
-                Copy link → share with patient
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #0c1f1a;
-                    color: #5eead4;
-                    border: 1px solid #0d9488;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >5</span
-                >
-                View all analyses + HTML report per patient
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #0c1f1a;
-                    color: #5eead4;
-                    border: 1px solid #0d9488;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >6</span
-                >
-                "Scan Now" — in-office scan saved to patient's data
-              </div>
-            </div>
-          </div>
-
-          <!-- Patient flow -->
-          <div>
-            <div
-              style="
-                color: #f0abfc;
-                font-size: 0.75rem;
-                font-weight: 700;
-                margin-bottom: 0.6rem;
-              "
-            >
-              🧑‍⚕️ Patient flow
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.3rem">
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #1a0e1e;
-                    color: #f0abfc;
-                    border: 1px solid #a21caf;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >1</span
-                >
-                Open unique link
-                <code
-                  style="
-                    background: #1e293b;
-                    padding: 0.05rem 0.3rem;
-                    border-radius: 4px;
-                    font-size: 0.7rem;
-                  "
-                  >?pt=&lt;token&gt;</code
-                >
-                — no login needed
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #1a0e1e;
-                    color: #f0abfc;
-                    border: 1px solid #a21caf;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >2</span
-                >
-                App validates token → GET /patient-session/:token
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #1a0e1e;
-                    color: #f0abfc;
-                    border: 1px solid #a21caf;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >3</span
-                >
-                Choose 👋 Hand Scan (7s) or 🧍 Full Body (10s)
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #1a0e1e;
-                    color: #f0abfc;
-                    border: 1px solid #a21caf;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >4</span
-                >
-                POST /patient-analyze — token + scanMode → Gemini → Firestore
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #1a0e1e;
-                    color: #f0abfc;
-                    border: 1px solid #a21caf;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >5</span
-                >
-                Severity scores + voice feedback displayed
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  color: #94a3b8;
-                "
-              >
-                <span
-                  style="
-                    background: #1a0e1e;
-                    color: #f0abfc;
-                    border: 1px solid #a21caf;
-                    border-radius: 999px;
-                    padding: 0.1rem 0.5rem;
-                    white-space: nowrap;
-                  "
-                  >6</span
-                >
-                History + My Report — all via linkToken, no account
-              </div>
-            </div>
+        <div>
+          <div style="color:#f0abfc;font-size:0.72rem;font-weight:700;margin-bottom:0.45rem">🧑‍⚕️ Patient flow (home)</div>
+          <div style="display:flex;flex-direction:column;gap:0.22rem">
+            <div style="font-size:0.7rem;color:#94a3b8">① Receives link: https://app.url/?pt=&lt;token&gt;</div>
+            <div style="font-size:0.7rem;color:#94a3b8">② App validates token → GET /patient-session/:token</div>
+            <div style="font-size:0.7rem;color:#94a3b8">③ Choose 👋 Hand Scan (7 s) or 🧍 Full Body (10 s)</div>
+            <div style="font-size:0.7rem;color:#94a3b8">④ POST /patient-analyze — token + scanMode → Gemini</div>
+            <div style="font-size:0.7rem;color:#94a3b8">⑤ Results in Firestore · TTS speaks diagnosis aloud</div>
+            <div style="font-size:0.7rem;color:#94a3b8">⑥ History + My Report — all via linkToken, no account</div>
           </div>
         </div>
+
       </div>
     </div>
-    <!-- .diagram -->
 
     <!-- ── Legend ── -->
     <div class="legend">
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #0d9488; background: #0c1f1a"
-        ></div>
-        Doctor (Email Auth)
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #a21caf; background: #1a0e1e"
-        ></div>
-        Patient (Link Token)
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #1d4ed8; background: #0c1a3a"
-        ></div>
-        React Frontend
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #15803d; background: #0a2218"
-        ></div>
-        Express Backend
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #7c3aed; background: #1a0f2e"
-        ></div>
-        Gemini Flash
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #9333ea; background: #1c0f2a"
-        ></div>
-        ADK Agent + Tools
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #0ea5e9; background: #0f1f2e"
-        ></div>
-        Firestore
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #ca8a04; background: #1a1a0a"
-        ></div>
-        Link Token (patientTokens)
-      </div>
-      <div class="legend-item">
-        <div
-          class="legend-dot"
-          style="color: #0369a1; background: #0e1e2e"
-        ></div>
-        Cloud Run
-      </div>
+      <div class="legend-item"><div class="legend-dot" style="color:#0d9488;background:#0c1f1a"></div>Doctor (Email Auth)</div>
+      <div class="legend-item"><div class="legend-dot" style="color:#a21caf;background:#1a0e1e"></div>Patient (Link Token)</div>
+      <div class="legend-item"><div class="legend-dot" style="color:#1d4ed8;background:#0c1a3a"></div>Browser SPA</div>
+      <div class="legend-item"><div class="legend-dot" style="color:#15803d;background:#0a2218"></div>Backend API</div>
+      <div class="legend-item"><div class="legend-dot" style="color:#7c3aed;background:#1a0f2e"></div>Gemini Flash</div>
+      <div class="legend-item"><div class="legend-dot" style="color:#9333ea;background:#1c0f2a"></div>ADK Agent</div>
+      <div class="legend-item"><div class="legend-dot" style="color:#0ea5e9;background:#0f1f2e"></div>Firestore</div>
+      <div class="legend-item"><div class="legend-dot" style="color:#0369a1;background:#0e1e2e"></div>Cloud Run</div>
     </div>
 
     <footer>Agent Parkinson-Doctor · Gemini Live Agent Challenge 2026</footer>
