@@ -1,9 +1,14 @@
 const admin = require('firebase-admin');
+const fs    = require('fs');
 const path  = require('path');
 
-const credential = admin.credential.cert(
-  require(path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS))
-);
+// Use explicit key file if available, otherwise fall back to Application Default Credentials
+// (Cloud Run automatically provides ADC via the attached service account).
+const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const credential =
+  keyPath && fs.existsSync(keyPath)
+    ? admin.credential.cert(require(path.resolve(keyPath)))
+    : admin.credential.applicationDefault();
 
 // Default app – used by Firestore (agentparkinson project)
 if (!admin.apps.length) {
