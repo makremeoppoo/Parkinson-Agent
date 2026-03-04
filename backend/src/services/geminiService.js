@@ -1,7 +1,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
 
 const getModel = () =>
   genAI.getGenerativeModel({
@@ -127,10 +127,10 @@ const bodyPrompt = (lang) => `
  */
 const analyzeFrame = async (currentLang, base64Data, mimeType, scanMode = 'hands') => {
   try {
-    const model    = getModel();
+    const model = getModel();
     const imagePart = { inlineData: { data: base64Data, mimeType } };
-    const prompt   = scanMode === 'body' ? bodyPrompt(currentLang) : handsPrompt(currentLang);
-    const result   = await model.generateContent([prompt, imagePart]);
+    const prompt = scanMode === 'body' ? bodyPrompt(currentLang) : handsPrompt(currentLang);
+    const result = await model.generateContent([prompt, imagePart]);
     return JSON.parse(result.response.text());
   } catch (error) {
     console.error("[analyzeFrame] Gemini error:", error);
