@@ -1,0 +1,9 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/agentparkinson/parkinson-backend'
+      - '.'
+images:
+  - 'gcr.io/agentparkinson/parkinson-backend'
