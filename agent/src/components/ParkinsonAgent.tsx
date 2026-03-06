@@ -1,6 +1,6 @@
 /** @format */
 
-import { FileBarChart2, LogOut, UserCheck, RefreshCw } from "lucide-react";
+import { FileBarChart2, FileDown, LogOut, UserCheck, RefreshCw } from "lucide-react";
 import { User } from "firebase/auth";
 import { HandPanel } from "./HandPanel";
 import { AgentAvatar } from "./AgentAvatar";
@@ -62,6 +62,17 @@ export function ParkinsonAgent({
     }
   };
 
+  const handleDownloadPdf = async () => {
+    try {
+      const token = await getToken();
+      let url = `${CONFIG.serverUrl}/results/report?token=${encodeURIComponent(token)}&format=print`;
+      if (patientCode) url += `&patientCode=${encodeURIComponent(patientCode)}`;
+      window.open(url, "_blank");
+    } catch (err) {
+      console.error("[handleDownloadPdf]", err);
+    }
+  };
+
   return (
     <div className='min-h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden flex flex-col'>
       <div className='h-1 w-full bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900' />
@@ -108,6 +119,14 @@ export function ParkinsonAgent({
             className='flex items-center gap-2 bg-violet-800 hover:bg-violet-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 border border-violet-600 hover:border-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.2)] hover:shadow-[0_0_30px_rgba(139,92,246,0.4)]'>
             <FileBarChart2 className='w-4 h-4' />
             REPORT
+          </button>
+
+          <button
+            onClick={handleDownloadPdf}
+            title='Download as PDF'
+            className='flex items-center gap-2 text-stone-400 hover:text-stone-200 px-3 py-2 rounded-xl text-sm transition-colors border border-stone-700 hover:border-stone-500'>
+            <FileDown className='w-4 h-4' />
+            PDF
           </button>
 
           <button

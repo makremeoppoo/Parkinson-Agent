@@ -1,10 +1,19 @@
-const { Firestore } = require('@google-cloud/firestore');
-const crypto        = require('crypto');
+const admin  = require('firebase-admin');
+const crypto = require('crypto');
+const fs     = require('fs');
+const path   = require('path');
 
-const db = new Firestore({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-});
+// Initialise firebase-admin if not already done (this module may load before auth.js)
+if (!admin.apps.length) {
+  const keyPath    = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const credential = keyPath && fs.existsSync(path.resolve(keyPath))
+    ? admin.credential.cert(require(path.resolve(keyPath)))
+    : admin.credential.applicationDefault();
+  admin.initializeApp({ credential });
+}
+
+const db        = admin.firestore();
+const Firestore = admin.firestore;
 
 // ── Collection helpers ────────────────────────────────────────────────────────
 

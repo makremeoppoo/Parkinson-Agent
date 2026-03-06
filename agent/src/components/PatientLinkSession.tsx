@@ -91,6 +91,10 @@ export function PatientLinkSession({ linkToken }: PatientLinkSessionProps) {
     window.open(`${CONFIG.serverUrl}/patient-session/${linkToken}/report`, '_blank');
   };
 
+  const handleDownloadPdf = () => {
+    window.open(`${CONFIG.serverUrl}/patient-session/${linkToken}/report?format=print`, '_blank');
+  };
+
   const handleGuide = () => {
     speak(
       'Welcome. Hold your hands steady in front of the camera for 7 seconds, then click Analyze to send the video to our AI for evaluation.'
@@ -139,6 +143,12 @@ export function PatientLinkSession({ linkToken }: PatientLinkSessionProps) {
             onClick={handleOpenReport}
             style={{ padding: '0.45rem 0.9rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: 8, fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' }}>
             My Report
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            title='Download as PDF'
+            style={{ padding: '0.45rem 0.9rem', background: '#1c1917', color: '#a8a29e', border: '1px solid #44403c', borderRadius: 8, fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' }}>
+            ↓ PDF
           </button>
           <button
             onClick={() => setShowHistory((v) => !v)}

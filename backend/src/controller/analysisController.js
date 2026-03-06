@@ -98,13 +98,20 @@ const exportCsv = async (req, res) => {
 const getReport = async (req, res) => {
   try {
     const { uid }        = req.user;
-    const { patientCode } = req.query;
+    const { patientCode, format } = req.query;
 
     const records = patientCode
       ? await getPatientAnalyses(uid, patientCode)
       : await getAnalysesFromCloud(uid);
 
-    const html = generateReport(records);
+    let html = generateReport(records);
+    if (format === 'print') {
+      const date  = new Date().toISOString().slice(0, 10);
+      const label = patientCode ? `${patientCode} – ${date}` : date;
+      html = html
+        .replace(/<title>[^<]*<\/title>/, `<title>Parkinson Report – ${label}</title>`)
+        .replace('</body>', '<script>window.onload=function(){window.print();}</script></body>');
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(html);
   } catch (err) {
@@ -322,7 +329,13 @@ const getPatientSessionReport = async (req, res) => {
     const ctx = await resolveToken(res, req.params.token);
     if (!ctx) return;
     const records = await getPatientAnalyses(ctx.doctorId, ctx.patientCode);
-    const html    = generateReport(records);
+    let html      = generateReport(records);
+    if (req.query.format === 'print') {
+      const date  = new Date().toISOString().slice(0, 10);
+      html = html
+        .replace(/<title>[^<]*<\/title>/, `<title>Parkinson Report – ${ctx.patientCode} – ${date}</title>`)
+        .replace('</body>', '<script>window.onload=function(){window.print();}</script></body>');
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(html);
   } catch (err) {
