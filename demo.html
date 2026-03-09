@@ -1,0 +1,971 @@
+<!-- @format -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parkinson Agent — Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #020617;
+        color: #f1f5f9;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        height: 100vh;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      /* ── Crossfade container ── */
+      #stage {
+        position: absolute;
+        inset: 0;
+        bottom: 52px;
+      }
+      .slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .slide.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* ── Controls ── */
+      #ctrl {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 52px;
+        background: rgba(2, 6, 23, 0.97);
+        border-top: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+      }
+      #btnPlay {
+        background: #3b82f6;
+        border: none;
+        color: #fff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      #btnPlay:hover {
+        background: #2563eb;
+      }
+      #pw {
+        flex: 1;
+        height: 4px;
+        background: #1e293b;
+        border-radius: 2px;
+        cursor: pointer;
+        position: relative;
+      }
+      #pb {
+        height: 100%;
+        background: #3b82f6;
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.1s linear;
+      }
+      #dots {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .dt {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #1e293b;
+        cursor: pointer;
+        transition: all 0.25s;
+      }
+      .dt.on {
+        background: #3b82f6;
+        width: 14px;
+        border-radius: 3px;
+      }
+      #tl {
+        font-size: 11px;
+        color: #475569;
+        flex-shrink: 0;
+        min-width: 40px;
+        text-align: right;
+      }
+
+      /* ── Browser chrome ── */
+      .browser {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .bar {
+        height: 36px;
+        background: #0f172a;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 14px;
+        flex-shrink: 0;
+      }
+      .burl {
+        flex: 1;
+        background: #020617;
+        border-radius: 6px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        font-size: 0.72rem;
+        color: #475569;
+        gap: 6px;
+      }
+      .burl span {
+        color: #64748b;
+      }
+      .bcontent {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* ── App header (matches real app) ── */
+      .app-header {
+        height: 44px;
+        background: #020617;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        flex-shrink: 0;
+      }
+      .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .app-logo p {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin: 0;
+      }
+      .app-logo small {
+        font-size: 0.68rem;
+        color: #60a5fa;
+        display: block;
+      }
+      .hbtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0.35rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+      }
+
+      /* ── 3-panel scan layout ── */
+      .three-panel {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 380px 1fr;
+        overflow: hidden;
+      }
+      .side-panel {
+        border-color: rgba(30, 41, 59, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: #020617;
+      }
+      .left-p {
+        border-right: 1px solid rgba(30, 41, 59, 0.5);
+      }
+      .right-p {
+        border-left: 1px solid rgba(30, 41, 59, 0.5);
+      }
+      .center-panel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #020617;
+        border-bottom: 1px solid #1e293b;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      /* ── Animations ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes fadeRight {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes popIn {
+        0% {
+          opacity: 0;
+          transform: scale(0.75);
+        }
+        70% {
+          transform: scale(1.05);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes barGrow {
+        from {
+          transform: scaleY(0);
+        }
+        to {
+          transform: scaleY(1);
+        }
+      }
+      @keyframes scanLine {
+        0% {
+          top: 0;
+        }
+        100% {
+          top: 100%;
+        }
+      }
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 15px #3b82f640;
+        }
+        50% {
+          box-shadow: 0 0 45px #3b82f6aa;
+        }
+      }
+      @keyframes typeIn {
+        from {
+          width: 0;
+        }
+        to {
+          width: 100%;
+        }
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: -200%;
+        }
+        100% {
+          background-position: 200%;
+        }
+      }
+      @keyframes countRing {
+        from {
+          stroke-dashoffset: 283;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      .a0 {
+        animation: fadeUp 0.5s ease both;
+      }
+      .a1 {
+        animation: fadeUp 0.5s ease 0.15s both;
+      }
+      .a2 {
+        animation: fadeUp 0.5s ease 0.3s both;
+      }
+      .a3 {
+        animation: fadeUp 0.5s ease 0.45s both;
+      }
+      .a4 {
+        animation: fadeUp 0.5s ease 0.6s both;
+      }
+      .a5 {
+        animation: fadeUp 0.5s ease 0.75s both;
+      }
+      .al {
+        animation: fadeLeft 0.5s ease both;
+      }
+      .ar {
+        animation: fadeRight 0.5s ease both;
+      }
+      .p0 {
+        animation: popIn 0.4s ease both;
+      }
+      .p1 {
+        animation: popIn 0.4s ease 0.12s both;
+      }
+      .p2 {
+        animation: popIn 0.4s ease 0.24s both;
+      }
+      .p3 {
+        animation: popIn 0.4s ease 0.36s both;
+      }
+      .p4 {
+        animation: popIn 0.4s ease 0.48s both;
+      }
+      .p5 {
+        animation: popIn 0.4s ease 0.6s both;
+      }
+
+      .gt {
+        background: linear-gradient(135deg, #60a5fa, #a78bfa, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* ── Cards ── */
+      .card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.7rem;
+        border-radius: 16px;
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+      .b-blue {
+        background: #1e3a8a;
+        color: #93c5fd;
+        border: 1px solid #1d4ed8;
+      }
+      .b-green {
+        background: #052e16;
+        color: #86efac;
+        border: 1px solid #166534;
+      }
+      .b-yellow {
+        background: #451a03;
+        color: #fde68a;
+        border: 1px solid #92400e;
+      }
+      .b-red {
+        background: #450a0a;
+        color: #fca5a5;
+        border: 1px solid #991b1b;
+      }
+      .b-purple {
+        background: #2e1065;
+        color: #d8b4fe;
+        border: 1px solid #7c3aed;
+      }
+
+      /* Score dots */
+      .sdot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1.5px solid #334155;
+        display: inline-block;
+      }
+      .sdot.on {
+        border-color: transparent;
+      }
+
+      /* ── Hand panel mockup ── */
+      .hand-vis {
+        width: 80px;
+        height: 120px;
+        position: relative;
+      }
+      .hand-label {
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .hand-metric {
+        position: absolute;
+        right: -60px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.65rem;
+        color: #64748b;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="ctrl">
+      <button id="btnPlay">▶</button>
+      <div id="pw"><div id="pb"></div></div>
+      <div id="dots"></div>
+      <div id="tl">0:00</div>
+    </div>
+
+    <script>
+      // ═══════════════════════════════════════════════════════════════
+      // SCENES
+      // ═══════════════════════════════════════════════════════════════
+      const SCENES = [
+        // ── 0 LANDING (10s) ───────────────────────────────────────────
+        {
+          dur: 8.5,
+          nar: `Welcome to Parkinson Agent — AI-powered Parkinson's symptom detection in under 10 seconds, from any device, with no specialist required.`,
+          html: `
+<div class="browser">
+  <div class="bar">
+    <div style="display:flex;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></div><div style="width:10px;height:10px;border-radius:50%;background:#10b981"></div></div>
+    <div class="burl"><span>🔒</span> parkinson-frontend-1096813203174.us-central1.run.app</div>
+  </div>
+  <div class="bcontent" style="background:linear-gradient(135deg,#020617 0%,#0a1628 50%,#020617 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem;position:relative;overflow:hidden">
+    <!-- Grid lines -->
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px);background-size:40px 40px"></div>
+    <!-- Glow blob -->
+    <div style="position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:400px;height:300px;background:radial-gradient(ellipse,#3b82f615 0%,transparent 70%);pointer-events:none"></div>
+
+    <div class="a0" style="font-size:4rem;filter:drop-shadow(0 0 40px #3b82f6bb)">🧠</div>
+    <div class="a1" style="font-size:.68rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#3b82f6">AI · GEMINI · ADK · FIREBASE</div>
+    <h1 class="a2 gt" style="font-size:clamp(2.2rem,5vw,4rem);font-weight:900;text-align:center;line-height:1.1">Parkinson Agent</h1>
+    <p class="a3" style="font-size:1rem;color:#94a3b8;text-align:center;max-width:480px;line-height:1.65">Detect Parkinson's symptoms in <strong style="color:#60a5fa">under 10 seconds</strong> — from any device, no specialist needed.</p>
+    <div class="a4" style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
+      <div style="background:#3b82f6;color:#fff;padding:.7rem 1.8rem;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;box-shadow:0 0 24px #3b82f650">🔬 Try Demo</div>
+      <div style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:.7rem 1.8rem;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer">Doctor Login →</div>
+    </div>
+    <div class="a5" style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center">
+      ${[
+        ["60M+", "patients worldwide"],
+        ["<10s", "detection time"],
+        ["0", "logins for patients"],
+        ["3", "scan modes"],
+      ]
+        .map(
+          ([v, l]) => `
+      <div style="text-align:center"><div style="font-size:1.5rem;font-weight:800;color:#f1f5f9">${v}</div><div style="font-size:.7rem;color:#475569">${l}</div></div>`,
+        )
+        .join("")}
+    </div>
+  </div>
+</div>`,
+        },
+
+        // ── 1 PROBLEM (11s) ───────────────────────────────────────────
+        {
+          dur: 11,
+          nar: `60 million people live with Parkinson's worldwide. Average diagnosis takes 5 to 10 years. Specialists are rare, expensive, and inaccessible for most patients.`,
+          html: `
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;gap:1.75rem;background:#020617">
+  <div class="a0" style="font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#ef4444">The Problem</div>
+  <h2 class="a1" style="font-size:clamp(1.5rem,3.5vw,2.4rem);font-weight:800;text-align:center">Parkinson's is <span style="color:#ef4444">underdiagnosed</span> worldwide</h2>
+  <div class="a2" style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
+    ${[
+      { v: "60M+", l: "patients worldwide", c: "#ef4444", icon: "🌍" },
+      { v: "5–10yr", l: "avg. diagnosis delay", c: "#f97316", icon: "⏳" },
+      { v: "$25K", l: "avg. annual care cost", c: "#f59e0b", icon: "💸" },
+      { v: "80%", l: "diagnosed too late", c: "#a855f7", icon: "📉" },
+    ]
+      .map(
+        (s) => `
+    <div class="card" style="text-align:center;min-width:130px;border-color:${s.c}30">
+      <div style="font-size:1.5rem;margin-bottom:.3rem">${s.icon}</div>
+      <div style="font-size:1.9rem;font-weight:900;color:${s.c}">${s.v}</div>
+      <div style="font-size:.72rem;color:#64748b;margin-top:.25rem">${s.l}</div>
+    </div>`,
+      )
+      .join("")}
+  </div>
+  <div class="a3 card" style="max-width:550px;width:100%;border-color:#ef444430;background:#450a0a20;display:flex;gap:.75rem;align-items:flex-start">
+    <span style="font-size:1.2rem;flex-shrink:0">⚠️</span>
+    <p style="font-size:.85rem;color:#fca5a5;line-height:1.6">Specialist neurologists are <strong>scarce and expensive</strong>. Remote and low-income patients have <strong>no access</strong> to early screening — even though early detection dramatically improves outcomes.</p>
+  </div>
+</div>`,
+        },
+
+        // ── 2 SOLUTION (12s) ──────────────────────────────────────────
+        {
+          dur: 12,
+          nar: `Parkinson Agent solves this with a 3-step pipeline: the patient records a 7-second hand video, Google Gemini AI analyzes tremors, rigidity, and bradykinesia, then delivers instant severity scores.`,
+          html: `
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;gap:1.75rem;background:#020617">
+  <div class="a0" style="font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#10b981">Our Solution</div>
+  <h2 class="a1" style="font-size:clamp(1.4rem,3vw,2.2rem);font-weight:800;text-align:center">AI screening in <span class="gt">3 simple steps</span></h2>
+  <div class="a2" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:780px">
+    ${[
+      {
+        n: "1",
+        icon: "📷",
+        title: "Record",
+        sub: "Hold hands or body<br>steady 7–10 sec",
+        c: "#3b82f6",
+      },
+      null,
+      {
+        n: "2",
+        icon: "✨",
+        title: "Gemini AI",
+        sub: "ADK agent<br>analyzes video",
+        c: "#a78bfa",
+      },
+      null,
+      {
+        n: "3",
+        icon: "📊",
+        title: "Results",
+        sub: "Scores, report<br>& voice message",
+        c: "#10b981",
+      },
+    ]
+      .map((s, i) =>
+        s === null
+          ? `<div style="font-size:1.4rem;color:#1e293b;flex-shrink:0">→</div>`
+          : `
+    <div class="card" style="text-align:center;flex:1;min-width:140px;max-width:200px;border-color:${s.c}40;position:relative">
+      <div style="position:absolute;top:-10px;left:-10px;width:22px;height:22px;background:${s.c};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800">${s.n}</div>
+      <div style="font-size:2.5rem;margin-bottom:.5rem">${s.icon}</div>
+      <h3 style="font-size:.92rem;margin-bottom:.3rem;color:${s.c}">${s.title}</h3>
+      <p style="font-size:.72rem;color:#64748b;line-height:1.5">${s.sub}</p>
+    </div>`,
+      )
+      .join("")}
+  </div>
+  <div class="a3" style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
+    <span class="badge b-blue">🤖 Google ADK</span>
+    <span class="badge b-purple">✨ Gemini 2.5 Flash</span>
+    <span class="badge b-green">No hardware needed</span>
+    <span class="badge b-green">Any smartphone</span>
+  </div>
+</div>`,
+        },
+
+        // ── 3 TWO ACTORS (12s) ────────────────────────────────────────
+        {
+          dur: 12,
+          nar: `The system has two actors. Doctors log into a Firebase-authenticated dashboard to manage patients and generate secure links. Patients open their private link — no account, no login required.`,
+          html: `
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem;background:#020617">
+  <div class="a0" style="font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#60a5fa">Architecture</div>
+  <h2 class="a1" style="font-size:clamp(1.3rem,3vw,2rem);font-weight:800;text-align:center">Two-actor system</h2>
+  <div style="display:flex;gap:1.5rem;width:100%;max-width:740px;flex-wrap:wrap">
+    <div class="card al" style="flex:1;min-width:240px;border-color:#60a5fa30">
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem">
+        <span style="font-size:1.6rem">👨‍⚕️</span>
+        <div><h3 style="color:#60a5fa">Doctor</h3><p style="font-size:.7rem;color:#475569">Firebase email / password</p></div>
+      </div>
+      ${[
+        "Dashboard — patient list",
+        "Create patient profiles",
+        "Generate & copy session link",
+        "View full medical reports",
+        "Access Firestore history",
+      ]
+        .map(
+          (t, i) => `
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#94a3b8;padding:.3rem 0;border-bottom:${i < 4 ? "1px solid #0f172a" : "none"}">
+        <span style="color:#10b981;font-size:.7rem">✓</span>${t}
+      </div>`,
+        )
+        .join("")}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;color:#1e293b;font-size:1.4rem;font-weight:300">⇄</div>
+    <div class="card ar" style="flex:1;min-width:240px;border-color:#a78bfa30">
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem">
+        <span style="font-size:1.6rem">🧑</span>
+        <div><h3 style="color:#a78bfa">Patient</h3><p style="font-size:.7rem;color:#475569">Private link — no login needed</p></div>
+      </div>
+      ${[
+        "Open link on any device",
+        "No account required",
+        "Record hand video",
+        "AI scan in &lt;10 seconds",
+        "View results & personal report",
+      ]
+        .map(
+          (t, i) => `
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#94a3b8;padding:.3rem 0;border-bottom:${i < 4 ? "1px solid #0f172a" : "none"}">
+        <span style="color:#10b981;font-size:.7rem">✓</span>${t}
+      </div>`,
+        )
+        .join("")}
+    </div>
+  </div>
+  <div class="a3 card" style="max-width:460px;width:100%;background:#1e3a8a20;border-color:#1d4ed850;text-align:center;padding:.75rem 1rem">
+    <p style="font-size:.78rem;color:#93c5fd">Data stored in <strong>Google Cloud Firestore</strong> under <code style="font-size:.72rem;background:#0f172a;padding:.1rem .35rem;border-radius:4px">doctors/{id}/patients/{code}/analyses</code></p>
+  </div>
+</div>`,
+        },
+
+        // ── 4 DOCTOR DASHBOARD (13s) ──────────────────────────────────
+        {
+          dur: 13,
+          nar: `Here is the Doctor Dashboard. The doctor sees all their patients with last severity and session count. They can add a new patient with a unique code, then generate a secure one-time session link to send by SMS or email.`,
+          html: `<div style="height:100%;background:#020617;display:flex;align-items:center;justify-content:center"><img src="demo-list-patient.png" style="max-width:100%;max-height:100%;object-fit:contain;animation:fadeUp .6s ease both"/></div>`,
+        },
+
+        // ── 5 PATIENT SESSION (12s) ───────────────────────────────────
+        {
+          dur: 13,
+          nar: `The patient receives a private link — no login, no account needed. They open it on any phone or laptop and see the scan interface with their patient code and session history.`,
+          html: `<div style="height:100%;background:#020617;display:flex;align-items:center;justify-content:center;padding:10px">
+  <img src="scan hands demo.png" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease both"/>
+</div>`,
+        },
+
+        // ── 6 SCANNING (12s) ──────────────────────────────────────────
+        {
+          dur: 12,
+          nar: `The patient clicks Start Recording. The camera captures their hands for 7 seconds. The AI watches for micro-tremors, finger rigidity, and slow movement in real time.`,
+          html: `<div style="height:100%;background:#020617;display:flex;align-items:center;justify-content:center;padding:10px">
+  <img src="cam hands demo.png" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease both"/>
+</div>`,
+        },
+
+        // ── 7 RESULTS (12s) ───────────────────────────────────────────
+        {
+          dur: 12,
+          nar: `Instantly, the AI returns severity scores for each hand — tremor, rigidity, and bradykinesia — plus an overall severity badge, confidence percentage, clinical observations, and a spoken voice message.`,
+          html: `<div style="height:100%;background:#020617;display:flex;align-items:stretch;gap:6px;padding:10px">
+  <img src="scan core demo.png" style="flex:1;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease .2s both"/>
+</div>`,
+        },
+
+        // ── 9 REPORT (12s) ────────────────────────────────────────────
+        {
+          dur: 12,
+          nar: `The full medical report is generated by the ADK agent. It shows all sessions, severity trends over time, and per-session observations. The report can be exported as a printable PDF with a single click.`,
+          html: `<div style="height:100%;background:#020617;display:flex;align-items:stretch;gap:6px;padding:10px">
+  <img src="report demo.png" style="flex:1;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease .0s both"/>
+  <img src="pdf demo.png"    style="flex:1;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease .2s both"/>
+</div>`,
+        },
+
+        // ── 10 TECH STACK (12s) ───────────────────────────────────────
+        {
+          dur: 16,
+          nar: `Built entirely on Google Cloud. Google Agent Development Kit orchestrates the AI pipeline. Gemini 2.5 Flash processes the video. Firebase handles doctor authentication. Cloud Firestore stores all patient data. React and TypeScript power the frontend, deployed on Google Cloud Run.`,
+          html: `
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;gap:1.75rem;background:#020617">
+  <div class="a0" style="font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#3b82f6">Technology</div>
+  <h2 class="a1" style="font-size:clamp(1.3rem,3vw,2rem);font-weight:800;text-align:center">Built on Google Cloud</h2>
+  <div class="a2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;max-width:580px;width:100%">
+    ${[
+      {
+        icon: "🤖",
+        name: "Google ADK",
+        sub: "Agent orchestration",
+        c: "#1d4ed8",
+        cls: "p0",
+      },
+      {
+        icon: "✨",
+        name: "Gemini 2.5 Flash",
+        sub: "Vision AI model",
+        c: "#7c3aed",
+        cls: "p1",
+      },
+      {
+        icon: "🔥",
+        name: "Firebase Auth",
+        sub: "Doctor login",
+        c: "#b45309",
+        cls: "p2",
+      },
+      {
+        icon: "🗄️",
+        name: "Cloud Firestore",
+        sub: "Patient database",
+        c: "#065f46",
+        cls: "p3",
+      },
+      {
+        icon: "⚛️",
+        name: "React + TypeScript",
+        sub: "Frontend",
+        c: "#0c4a6e",
+        cls: "p4",
+      },
+      {
+        icon: "☁️",
+        name: "Cloud Run",
+        sub: "Serverless deploy",
+        c: "#1e3a8a",
+        cls: "p5",
+      },
+    ]
+      .map(
+        (t) => `
+    <div class="${t.cls} card" style="text-align:center;padding:.9rem .75rem;border-color:${t.c}40;background:${t.c}15">
+      <div style="font-size:1.8rem;margin-bottom:.35rem">${t.icon}</div>
+      <div style="font-weight:700;font-size:.82rem;color:#e2e8f0">${t.name}</div>
+      <div style="font-size:.68rem;color:#475569;margin-top:.2rem">${t.sub}</div>
+    </div>`,
+      )
+      .join("")}
+  </div>
+  <div class="a3" style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center">
+    <span class="badge b-blue">Open Source</span>
+    <span class="badge b-green">HIPAA-ready structure</span>
+    <span class="badge b-purple">Hackathon 2026</span>
+  </div>
+</div>`,
+        },
+
+        // ── 11 CLOSING (9s) ───────────────────────────────────────────
+        {
+          dur: 9,
+          nar: `Parkinson Agent. Detect. Monitor. Care. Built with Google AI for the 2026 Hackathon. Thank you.`,
+          html: `
+<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;position:relative;overflow:hidden;background:#020617">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,#1e3a8a18 0%,transparent 70%)"></div>
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);background-size:50px 50px"></div>
+  <div class="a0" style="font-size:5rem;filter:drop-shadow(0 0 60px #3b82f6cc);position:relative">🧠</div>
+  <h1 class="a1 gt" style="font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;position:relative">Parkinson Agent</h1>
+  <div class="a2" style="display:flex;gap:1.25rem;align-items:center;position:relative">
+    <span style="font-size:1rem;color:#334155">Detect</span>
+    <span style="color:#1e293b">·</span>
+    <span style="font-size:1rem;color:#475569">Monitor</span>
+    <span style="color:#1e293b">·</span>
+    <span style="font-size:1rem;color:#334155">Care</span>
+  </div>
+  <p class="a3" style="font-size:.88rem;color:#475569;position:relative">Built with Google AI · Hackathon 2026</p>
+  <div class="a4" style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;position:relative">
+    <span class="badge b-blue">🤖 Google ADK</span>
+    <span class="badge b-purple">✨ Gemini 2.5</span>
+    <span class="badge b-green">🔥 Firebase</span>
+    <span class="badge b-blue">☁️ Cloud Run</span>
+  </div>
+</div>`,
+        },
+      ];
+
+      // ═══════════════════════════════════════════════════════════════
+      // ENGINE
+      // ═══════════════════════════════════════════════════════════════
+
+      const stage = document.getElementById("stage");
+      const btnPlay = document.getElementById("btnPlay");
+      const pb = document.getElementById("pb");
+      const dotsEl = document.getElementById("dots");
+      const tl = document.getElementById("tl");
+
+      let cur = 0,
+        playing = false,
+        elapsed = 0,
+        totalElapsed = 0,
+        timer = null;
+      const totalDur = SCENES.reduce((s, sc) => s + sc.dur, 0);
+
+      // Build slides
+      const slides = SCENES.map((sc, i) => {
+        const el = document.createElement("div");
+        el.className = "slide";
+        el.innerHTML = sc.html;
+        stage.appendChild(el);
+        return el;
+      });
+
+      // Build dots
+      SCENES.forEach((sc, i) => {
+        const d = document.createElement("div");
+        d.className = "dt" + (i === 0 ? " on" : "");
+        d.title = `Scene ${i + 1}`;
+        d.onclick = () => goTo(i, true);
+        dotsEl.appendChild(d);
+      });
+
+      function updateDots() {
+        dotsEl
+          .querySelectorAll(".dt")
+          .forEach((d, i) => d.classList.toggle("on", i === cur));
+      }
+
+      function showSlide(idx) {
+        slides.forEach((s, i) => s.classList.toggle("active", i === idx));
+        updateDots();
+      }
+
+      function speak(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "en-US";
+        u.rate = 0.95; // natural pace
+        u.pitch = 1.0;
+        const voices = window.speechSynthesis.getVoices();
+        const v =
+          voices.find(
+            (v) =>
+              v.lang === "en-US" &&
+              /Google|Premium|Natural|Samantha|Daniel/i.test(v.name),
+          ) ||
+          voices.find((v) => v.lang === "en-US") ||
+          voices[0];
+        if (v) u.voice = v;
+        window.speechSynthesis.speak(u);
+      }
+
+      function goTo(idx, resetEl) {
+        window.speechSynthesis?.cancel();
+        cur = idx;
+        elapsed = 0;
+        if (resetEl)
+          totalElapsed = SCENES.slice(0, idx).reduce((s, sc) => s + sc.dur, 0);
+        showSlide(idx);
+        if (playing) speak(SCENES[idx].nar);
+      }
+
+      function tick() {
+        elapsed += 0.1;
+        totalElapsed += 0.1;
+        // Progress
+        pb.style.width = Math.min((totalElapsed / totalDur) * 100, 100) + "%";
+        // Time
+        const m = Math.floor(totalElapsed / 60),
+          s = Math.floor(totalElapsed % 60);
+        tl.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+        // Advance
+        if (elapsed >= SCENES[cur].dur) {
+          elapsed = 0;
+          if (cur < SCENES.length - 1) {
+            goTo(cur + 1, false);
+          } else {
+            pause();
+            btnPlay.textContent = "↺";
+            btnPlay.onclick = () => {
+              totalElapsed = 0;
+              goTo(0, true);
+              play();
+              btnPlay.onclick = togglePlay;
+            };
+          }
+        }
+      }
+
+      function play() {
+        playing = true;
+        btnPlay.textContent = "⏸";
+        timer = setInterval(tick, 100);
+        speak(SCENES[cur].nar);
+      }
+      function pause() {
+        playing = false;
+        btnPlay.textContent = "▶";
+        clearInterval(timer);
+        timer = null;
+        window.speechSynthesis?.cancel();
+      }
+      function togglePlay() {
+        playing ? pause() : play();
+      }
+
+      btnPlay.onclick = togglePlay;
+
+      // Seek on progress bar click
+      document.getElementById("pw").onclick = (e) => {
+        const pct =
+          (e.clientX - e.currentTarget.getBoundingClientRect().left) /
+          e.currentTarget.offsetWidth;
+        const target = pct * totalDur;
+        let acc = 0;
+        for (let i = 0; i < SCENES.length; i++) {
+          if (acc + SCENES[i].dur > target) {
+            totalElapsed = target;
+            elapsed = target - acc;
+            goTo(i, false);
+            break;
+          }
+          acc += SCENES[i].dur;
+        }
+      };
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          e.preventDefault();
+          togglePlay();
+        }
+        if (e.code === "ArrowRight" && cur < SCENES.length - 1)
+          goTo(cur + 1, true);
+        if (e.code === "ArrowLeft" && cur > 0) goTo(cur - 1, true);
+      });
+
+      // Wait for voices then auto-play
+      function start() {
+        showSlide(0);
+        setTimeout(play, 600);
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.getVoices().length
+          ? start()
+          : (window.speechSynthesis.onvoiceschanged = start);
+      } else {
+        start();
+      }
+    </script>
+  </body>
+</html>

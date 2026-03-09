@@ -14,16 +14,15 @@ let routes = (app) => {
   router.get('/results/cloud',              verifyToken, controller.getCloudResults);
 
   // Doctor patient management (authenticated)
-  router.get('/patients',                  verifyToken, controller.listPatientsHandler);
-  router.get('/patients/:code',            verifyToken, controller.getPatientHandler);
-  router.get('/patients/:code/analyses',   verifyToken, controller.listPatientAnalysesHandler);
-  router.post('/patients',                 verifyToken, controller.createPatientHandler);
-
+  router.get('/patients',                          verifyToken, controller.listPatientsHandler);
+  router.get('/patients/:code',                    verifyToken, controller.getPatientHandler);
+  router.get('/patients/:code/analyses',           verifyToken, controller.listPatientAnalysesHandler);
+  router.post('/patients',                         verifyToken, controller.createPatientHandler);
   // ── Public patient-link routes (no Firebase auth — token in URL/body) ─────
-  router.get('/patient-session/:token',           controller.validatePatientSession);
-  router.post('/patient-analyze',                 controller.patientAnalyzeHandler);
-  router.get('/patient-session/:token/analyses',  controller.getPatientSessionAnalyses);
-  router.get('/patient-session/:token/report',    controller.getPatientSessionReport);
+  router.get('/patient-session/:token',                      controller.validatePatientSession);
+  router.post('/patient-analyze',                            controller.patientAnalyzeHandler);
+  router.get('/patient-session/:token/analyses',             controller.getPatientSessionAnalyses);
+  router.get('/patient-session/:token/report',               controller.getPatientSessionReport);
 
   app.use(router);
 };

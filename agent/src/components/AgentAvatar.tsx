@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Play, RotateCcw, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
+import { Bot, Play, RotateCcw, HelpCircle } from 'lucide-react';
 import type { ScanMode } from '../hooks/useVideoRecording';
 
 interface AgentAvatarProps {
@@ -41,7 +41,7 @@ export function AgentAvatar({ status, onStart, onReset, onGuide, scanMode, onMod
           <div className="relative z-10 flex flex-col items-center justify-center text-center">
             {status === 'idle' &&
             <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-                <span className="text-4xl">{scanMode === 'body' ? '🧍' : '👋'}</span>
+                <span className="text-5xl">🧠</span>
               </div>
             }
 
@@ -56,7 +56,7 @@ export function AgentAvatar({ status, onStart, onReset, onGuide, scanMode, onMod
 
             {status === 'complete' &&
             <div className="w-24 h-24 rounded-full bg-emerald-900/20 flex items-center justify-center border border-emerald-500/50">
-                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                <span className="text-5xl">🧠</span>
               </div>
             }
           </div>

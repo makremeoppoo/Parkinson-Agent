@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Login } from './components/Login';
+import { LandingPage } from './components/LandingPage';
 import { DoctorDashboard } from './components/DoctorDashboard';
 import { PatientLinkSession } from './components/PatientLinkSession';
 import { useAuth } from './hooks/useAuth';
@@ -9,13 +10,30 @@ const PATIENT_LINK_TOKEN = new URLSearchParams(window.location.search).get('pt')
 
 export function App() {
   const auth = useAuth();
+  const [showLanding, setShowLanding] = useState(true);
 
   // ── Patient link mode (no Firebase auth needed) ───────────────────────────
   if (PATIENT_LINK_TOKEN) {
     return <PatientLinkSession linkToken={PATIENT_LINK_TOKEN} />;
   }
 
-  // ── Auth loading ──────────────────────────────────────────────────────────
+  // ── Already logged in → skip landing and login ────────────────────────────
+  if (!auth.loading && auth.user) {
+    return (
+      <DoctorDashboard
+        getToken={auth.getToken}
+        onSignOut={async () => { await auth.signOut(); setShowLanding(true); }}
+        user={auth.user}
+      />
+    );
+  }
+
+  // ── Landing page (shown while auth loads, or before login) ───────────────
+  if (showLanding) {
+    return <LandingPage onDoctorLogin={() => setShowLanding(false)} />;
+  }
+
+  // ── Auth still loading after landing dismissed ────────────────────────────
   if (auth.loading) {
     return (
       <div style={{
@@ -31,16 +49,5 @@ export function App() {
   }
 
   // ── Not logged in → Doctor login ──────────────────────────────────────────
-  if (!auth.user) {
-    return <Login auth={auth} />;
-  }
-
-  // ── Doctor dashboard ──────────────────────────────────────────────────────
-  return (
-    <DoctorDashboard
-      getToken={auth.getToken}
-      onSignOut={auth.signOut}
-      user={auth.user}
-    />
-  );
+  return <Login auth={auth} />;
 }

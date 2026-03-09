@@ -73,12 +73,12 @@ type AuthMode =
   | { type: 'link';  linkToken: string };
 
 export function useVideoRecording(auth: AuthMode) {
-  const [status,       setStatus]       = useState<ScanStatus>("idle");
-  const [countdown,    setCountdown]    = useState(0);
-  const [recordedUrl,  setRecordedUrl]  = useState<string | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
-  const [analysis,     setAnalysis]     = useState<AnalysisResult | null>(null);
-  const [scanMode,     setScanMode]     = useState<ScanMode>("hands");
+  const [status,          setStatus]          = useState<ScanStatus>("idle");
+  const [countdown,       setCountdown]       = useState(0);
+  const [recordedUrl,     setRecordedUrl]     = useState<string | null>(null);
+  const [uploadStatus,    setUploadStatus]    = useState<UploadStatus>("idle");
+  const [analysis,        setAnalysis]        = useState<AnalysisResult | null>(null);
+  const [scanMode,        setScanMode]        = useState<ScanMode>("hands");
 
   const videoRef         = useRef<HTMLVideoElement>(null);
   const streamRef        = useRef<MediaStream | null>(null);

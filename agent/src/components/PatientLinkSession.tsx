@@ -1,11 +1,12 @@
 /** @format */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HandPanel } from './HandPanel';
 import { AgentAvatar } from './AgentAvatar';
 import { ScanningOverlay } from './ScanningOverlay';
 import { ResultOverlay } from './ResultOverlay';
 import { useVideoRecording, speak, AnalysisResult } from '../hooks/useVideoRecording';
+import { WelcomeTour } from './WelcomeTour';
 import { CONFIG } from '../global-config';
 
 interface PatientSession {
@@ -127,6 +128,7 @@ export function PatientLinkSession({ linkToken }: PatientLinkSessionProps) {
 
   return (
     <div className='min-h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden flex flex-col'>
+      <WelcomeTour />
       <div className='h-1 w-full bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900' />
 
       {/* Header */}

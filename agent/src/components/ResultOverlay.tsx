@@ -151,11 +151,11 @@ const severityConfig: Record<
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface ResultOverlayProps {
-  recordedUrl: string;
+  recordedUrl:  string;
   uploadStatus: UploadStatus;
-  analysis: AnalysisResult | null;
-  onSend: () => void;
-  onReset: () => void;
+  analysis:     AnalysisResult | null;
+  onSend:       () => void;
+  onReset:      () => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -334,6 +334,7 @@ export function ResultOverlay({
               </p>
             </div>
           )}
+
         </div>
       )}
     </div>
