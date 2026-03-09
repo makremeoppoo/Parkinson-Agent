@@ -549,8 +549,8 @@
 
         // ── 2 SOLUTION (12s) ──────────────────────────────────────────
         {
-          dur: 12,
-          nar: `Parkinson Agent solves this with a 3-step pipeline: the patient records a 7-second hand video, Google Gemini AI analyzes tremors, rigidity, and bradykinesia, then delivers instant severity scores.`,
+          dur: 16,
+          nar: `Parkinson Agent solves this with two precise scan modes: a 7-second hand scan for tremor and rigidity, and a 10-second full-body core scan for gait, posture, and balance. No hardware, no repeated questionnaires — just record, analyze.`,
           html: `
 <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;gap:1.75rem;background:#020617">
   <div class="a0" style="font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#10b981">Our Solution</div>
@@ -596,7 +596,7 @@
   </div>
   <div class="a3" style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
     <span class="badge b-blue">🤖 Google ADK</span>
-    <span class="badge b-purple">✨ Gemini 2.5 Flash</span>
+    <span class="badge b-purple">✨ Gemini Flash</span>
     <span class="badge b-green">No hardware needed</span>
     <span class="badge b-green">Any smartphone</span>
   </div>
@@ -669,35 +669,110 @@
 
         // ── 5 PATIENT SESSION (12s) ───────────────────────────────────
         {
-          dur: 13,
-          nar: `The patient receives a private link — no login, no account needed. They open it on any phone or laptop and see the scan interface with their patient code and session history.`,
+          dur: 16,
+          nar: `The patient receives a private link — no login, no account, no repeated questionnaires. They open it on any device and instantly see their patient code, past session history, and severity trends — everything the doctor needs without asking the same questions every visit.`,
           html: `<div style="height:100%;background:#020617;display:flex;align-items:center;justify-content:center;padding:10px">
   <img src="scan hands demo.png" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease both"/>
 </div>`,
         },
-
         // ── 6 SCANNING (12s) ──────────────────────────────────────────
         {
-          dur: 12,
-          nar: `The patient clicks Start Recording. The camera captures their hands for 7 seconds. The AI watches for micro-tremors, finger rigidity, and slow movement in real time.`,
+          dur: 11.5,
+          nar: `In hands mode, the camera records for just 7 seconds to capture gait and posture. The AI watches for micro-tremors, finger rigidity, bradykinesia, and slow movement — with clinical precision.`,
           html: `<div style="height:100%;background:#020617;display:flex;align-items:center;justify-content:center;padding:10px">
   <img src="cam hands demo.png" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease both"/>
 </div>`,
         },
-
-        // ── 7 RESULTS (12s) ───────────────────────────────────────────
+        // ── 5b BODY CORE SCAN (12s) ───────────────────────────────────
         {
           dur: 12,
-          nar: `Instantly, the AI returns severity scores for each hand — tremor, rigidity, and bradykinesia — plus an overall severity badge, confidence percentage, clinical observations, and a spoken voice message.`,
-          html: `<div style="height:100%;background:#020617;display:flex;align-items:stretch;gap:6px;padding:10px">
-  <img src="scan core demo.png" style="flex:1;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease .2s both"/>
+          nar: `In core mode, the body core scan mode records 10 seconds of full-body movement — analyzing posture, gait, arm swing, head tremor, and balance. Same private link, no extra equipment needed.`,
+          html: `<div style="height:100%;background:#020617;display:flex;align-items:center;justify-content:center;padding:10px">
+  <img src="scan core demo.png" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease both"/>
+</div>`,
+        },
+
+        // ── 7 RESULTS (14s) ───────────────────────────────────────────
+        {
+          dur: 16,
+          nar: `Instantly, Gemini returns precise severity scores for each hand — tremor, rigidity, and bradykinesia — scored 0 to 3. An overall severity badge from None to Severe, a confidence percentage, clinical observations, and a spoken voice message are all delivered in seconds.`,
+          html: `
+<div style="height:100%;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;padding:1.25rem;overflow-y:auto">
+  <div class="a0" style="text-align:center">
+    <p style="font-size:.6rem;color:#10b981;font-family:monospace;text-transform:uppercase;letter-spacing:.14em;margin-bottom:.2rem">Parkinson Analysis</p>
+    <h2 style="font-size:1.05rem;font-weight:700;margin:0">Session Results</h2>
+  </div>
+  <div class="a1" style="display:flex;gap:.6rem;width:100%;max-width:520px">
+    ${[
+      {
+        side: "LEFT HAND",
+        c: "#60a5fa",
+        metrics: [
+          { l: "Tremor", s: 1, col: "#f59e0b" },
+          { l: "Rigidity", s: 1, col: "#f59e0b" },
+          { l: "Bradykinesia", s: 0, col: "#10b981" },
+        ],
+        sev: "MILD",
+        sc: "#f59e0b",
+      },
+      {
+        side: "RIGHT HAND",
+        c: "#a78bfa",
+        metrics: [
+          { l: "Tremor", s: 2, col: "#f97316" },
+          { l: "Rigidity", s: 2, col: "#f97316" },
+          { l: "Bradykinesia", s: 1, col: "#f59e0b" },
+        ],
+        sev: "MODERATE",
+        sc: "#f97316",
+      },
+    ]
+      .map(
+        (h) => `
+    <div style="flex:1;background:#0f172a;border:1px solid ${h.c}25;border-radius:10px;padding:.75rem .85rem">
+      <p style="font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${h.c};margin:0 0 .5rem">${h.side}</p>
+      ${h.metrics
+        .map(
+          (m) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.22rem 0;font-size:.68rem">
+        <span style="color:#64748b">${m.l}</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="display:flex;gap:3px">${[0, 1, 2].map((i) => `<div style="width:7px;height:7px;border-radius:50%;${i < m.s ? "background:" + m.col : "border:1.5px solid #334155"}"></div>`).join("")}</div>
+          <span style="font-size:.66rem;font-weight:700;color:${m.col};width:8px">${m.s}</span>
+        </div>
+      </div>`,
+        )
+        .join("")}
+      <span style="display:inline-block;margin-top:.45rem;padding:.15rem .5rem;border-radius:10px;font-size:.62rem;font-weight:700;color:${h.sc};background:${h.sc}18;border:1px solid ${h.sc}45">${h.sev}</span>
+    </div>`,
+      )
+      .join("")}
+  </div>
+  <div class="a2" style="width:100%;max-width:520px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem">
+    <div>
+      <p style="font-size:.58rem;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .25rem">Overall Severity</p>
+      <span style="padding:.22rem .65rem;border-radius:14px;font-size:.78rem;font-weight:700;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b45">MILD</span>
+    </div>
+    <div style="text-align:right">
+      <p style="font-size:.58rem;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .25rem">Confidence</p>
+      <span style="font-size:1.8rem;font-weight:900;color:#f1f5f9;font-family:monospace">87%</span>
+    </div>
+  </div>
+  <div class="a3" style="width:100%;max-width:520px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:.7rem 1rem">
+    <p style="font-size:.58rem;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .35rem">Observations</p>
+    <p style="font-size:.75rem;color:#cbd5e1;line-height:1.55;margin:0">Mild resting tremor in right hand at 4–5 Hz. Left hand shows minimal signs. Bradykinesia mildly present bilaterally. No rigidity detected at rest.</p>
+  </div>
+  <div class="a4" style="width:100%;max-width:520px;background:#1e3a8a18;border:1px solid #1d4ed840;border-radius:10px;display:flex;gap:.55rem;align-items:flex-start;padding:.6rem .85rem">
+    <span style="font-size:.85rem;flex-shrink:0">🔊</span>
+    <p style="font-size:.7rem;color:#93c5fd;font-style:italic;line-height:1.5;margin:0">"Mild tremor detected in your right hand. Scores are low overall. Please follow up with your neurologist for a complete evaluation."</p>
+  </div>
 </div>`,
         },
 
         // ── 9 REPORT (12s) ────────────────────────────────────────────
         {
-          dur: 12,
-          nar: `The full medical report is generated by the ADK agent. It shows all sessions, severity trends over time, and per-session observations. The report can be exported as a printable PDF with a single click.`,
+          dur: 17,
+          nar: `The full medical report tracks the clear evolution of the disease over time. Every session is stored — severity scores, observations, confidence levels — so doctors can see exactly how symptoms progress or improve across weeks and months. Exportable as a printable PDF in one click.`,
           html: `<div style="height:100%;background:#020617;display:flex;align-items:stretch;gap:6px;padding:10px">
   <img src="report demo.png" style="flex:1;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease .0s both"/>
   <img src="pdf demo.png"    style="flex:1;object-fit:contain;border-radius:8px;animation:fadeUp .5s ease .2s both"/>
@@ -706,8 +781,8 @@
 
         // ── 10 TECH STACK (12s) ───────────────────────────────────────
         {
-          dur: 16,
-          nar: `Built entirely on Google Cloud. Google Agent Development Kit orchestrates the AI pipeline. Gemini 2.5 Flash processes the video. Firebase handles doctor authentication. Cloud Firestore stores all patient data. React and TypeScript power the frontend, deployed on Google Cloud Run.`,
+          dur: 20,
+          nar: `I built the full stack — Node.js backend with Google ADK orchestrating the Gemini AI pipeline, and a React TypeScript frontend. It was my first time using ADK, and wiring a live video stream into a multimodal AI agent was a real challenge. I designed the two-actor architecture — doctors get a Firebase-authenticated dashboard, while patients receive a private link with no account needed. The most rewarding moment was seeing the AI return real per-symptom severity scores from an actual hand video, knowing this could help detect Parkinson's years earlier for patients who cannot access a specialist.`,
           html: `
 <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;gap:1.75rem;background:#020617">
   <div class="a0" style="font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#3b82f6">Technology</div>
@@ -723,7 +798,7 @@
       },
       {
         icon: "✨",
-        name: "Gemini 2.5 Flash",
+        name: "Gemini Flash",
         sub: "Vision AI model",
         c: "#7c3aed",
         cls: "p1",
@@ -767,7 +842,16 @@
       )
       .join("")}
   </div>
-  <div class="a3" style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center">
+  <!-- Contribution -->
+  <div class="a3" style="width:100%;max-width:580px;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1rem 1.25rem;display:flex;flex-direction:column;gap:.55rem">
+    <p style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#3b82f6;margin:0">Our Contribution</p>
+    ${[
+      "I built the full stack — Node.js backend with Google ADK orchestrating the Gemini AI pipeline, and a React + TypeScript frontend. It was my first time using ADK, and wiring a live video stream into a multimodal AI agent was a real challenge.",
+      "I designed the two-actor architecture: doctors get a Firebase-authenticated dashboard, while patients receive a private link — no account, no login. Getting that token-based flow secure and seamless took most of the night.",
+      "The most rewarding moment was seeing the AI return real per-symptom severity scores from an actual hand video — knowing this could help detect Parkinson's years earlier for patients who cannot access a specialist.",
+    ].map((l,i)=>`<p class="p${i}" style="font-size:.76rem;color:#94a3b8;line-height:1.6;margin:0">${l}</p>`).join('')}
+  </div>
+  <div class="a4" style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center">
     <span class="badge b-blue">Open Source</span>
     <span class="badge b-green">HIPAA-ready structure</span>
     <span class="badge b-purple">Hackathon 2026</span>
@@ -795,7 +879,7 @@
   <p class="a3" style="font-size:.88rem;color:#475569;position:relative">Built with Google AI · Hackathon 2026</p>
   <div class="a4" style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;position:relative">
     <span class="badge b-blue">🤖 Google ADK</span>
-    <span class="badge b-purple">✨ Gemini 2.5</span>
+    <span class="badge b-purple">✨ Gemini AI</span>
     <span class="badge b-green">🔥 Firebase</span>
     <span class="badge b-blue">☁️ Cloud Run</span>
   </div>
